@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #F9F9F8;
+    --foreground: #1A1A18;
+    --muted: #6B6B66;
+    --border: #E4E4E0;
+    --card: #FFFFFF;
+
+    --accent: #534AB7;
+    --accent-hover: #443DA0;
+    --accent-light: #EEEDFB;
+
+    --urgent: #A32D2D;
+    --urgent-light: #FCEBEB;
+    --urgent-border: #E8B4B4;
+
+    --high: #854F0B;
+    --high-light: #FAEEDA;
+    --high-border: #E8D0A8;
+
+    --normal: #185FA5;
+    --normal-light: #E6F1FB;
+    --normal-border: #B0CFF0;
+
+    --low: #3B6D11;
+    --low-light: #EAF3DE;
+    --low-border: #B8D9A0;
+  }
+
+  .dark {
+    --background: #111110;
+    --foreground: #F0F0EE;
+    --muted: #8B8B86;
+    --border: #2A2A27;
+    --card: #1A1A18;
+
+    --accent: #7B73E4;
+    --accent-hover: #8B83F4;
+    --accent-light: #1E1B3A;
+
+    --urgent: #F08080;
+    --urgent-light: #2D1010;
+    --urgent-border: #5A2020;
+
+    --high: #E09040;
+    --high-light: #2D1C0A;
+    --high-border: #5A3518;
+
+    --normal: #60A8E8;
+    --normal-light: #0C1E30;
+    --normal-border: #1A3C5A;
+
+    --low: #7DC840;
+    --low-light: #0E1E08;
+    --low-border: #1E3C10;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
+  }
+
+  input, select, textarea {
+    @apply outline-none;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--foreground);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--muted) 50%, transparent);
+  }
+}
+
+@layer components {
+  .priority-dot {
+    @apply w-2 h-2 rounded-full flex-shrink-0;
+  }
+}
