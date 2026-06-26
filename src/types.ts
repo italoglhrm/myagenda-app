@@ -4,13 +4,34 @@ export type Status = 'todo' | 'inprogress' | 'done'
 export type View = 'list' | 'kanban' | 'agenda'
 
 export interface Task {
-  id: number
+  id: string
   name: string
   priority: Priority
   category: Category
   status: Status
-  created_at: number
+  project_id: string | null
+  due_date: string | null   // ISO date string YYYY-MM-DD
+  created_at: string
 }
+
+export interface Project {
+  id: string
+  name: string
+  color: string
+  description: string | null
+  created_at: string
+}
+
+export const PROJECT_COLORS = [
+  '#534AB7', // purple
+  '#A32D2D', // red
+  '#854F0B', // amber
+  '#185FA5', // blue
+  '#3B6D11', // green
+  '#7B4EA0', // violet
+  '#0E7490', // cyan
+  '#9D3B7A', // pink
+] as const
 
 export const PRIORITY_LABELS: Record<Priority, string> = {
   urgent: 'Urgent',
@@ -46,27 +67,12 @@ export const PRIORITY_COLORS: Record<Priority, { text: string; bg: string; borde
   },
 }
 
-export const PRIORITY_ICONS: Record<Priority, string> = {
-  urgent: '🔴',
-  high: '🟠',
-  normal: '🔵',
-  low: '🟢',
-}
-
 export const CATEGORY_LABELS: Record<Category, string> = {
   work: 'Work',
   personal: 'Personal',
   health: 'Health',
   study: 'Study',
   other: 'Other',
-}
-
-export const CATEGORY_ICONS: Record<Category, string> = {
-  work: '💼',
-  personal: '🏠',
-  health: '🩺',
-  study: '📚',
-  other: '✦',
 }
 
 export const STATUS_LABELS: Record<Status, string> = {
