@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Task, Priority, Category, Status } from '../types'
+import { supabase } from '../lib/supabase'
 
-const PRIORITY_ORDER: Record<string, number> = {
-  urgent: 0,
-  high: 1,
-  normal: 2,
-  low: 3,
+const PRIORITY_ORDER: Record<Priority, number> = {
+  urgent: 0, high: 1, normal: 2, low: 3,
 }
 
 function sortByPriority(tasks: Task[]): Task[] {
@@ -14,62 +12,75 @@ function sortByPriority(tasks: Task[]): Task[] {
   )
 }
 
-export function useTasks() {
+// projectId: null = Inbox, string = specific project, 'all' = every task
+export function useTasks(projectId: string | null | 'all') {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchTasks = useCallback(async () => {
-    try {
-      const res = await fetch('/api/tasks', { credentials: 'include' })
-      if (!res.ok) return
-      const data: Task[] = await res.json()
-      setTasks(sortByPriority(data))
-    } finally {
-      setLoading(false)
+    setLoading(true)
+    let query = supabase.from('tasks').select('*')
+
+    if (projectId !== 'all') {
+      if (projectId === null) query = query.is('project_id', null)
+      else query = query.eq('project_id', projectId)
     }
-  }, [])
+
+    const { data } = await query.order('created_at', { ascending: false })
+    if (data) setTasks(sortByPriority(data as Task[]))
+    setLoading(false)
+  }, [projectId])
 
   useEffect(() => {
     fetchTasks()
   }, [fetchTasks])
 
-  async function addTask(
-    name: string,
-    priority: Priority,
-    category: Category
+  async function addTask(name: string, priority: Priority, category: Category, due_date?: string | null) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const insertProjectId = projectId === 'all' ? null : projectId
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        name,
+        priority,
+        category,
+        status: 'todo',
+        user_id: user.id,
+        project_id: insertProjectId,
+        due_date: due_date ?? null,
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setTasks((prev) => sortByPriority([...prev, data as Task]))
+    }
+  }
+
+  async function updateTask(
+    id: string,
+    changes: Partial<Pick<Task, 'name' | 'priority' | 'category' | 'status' | 'due_date'>>
   ) {
-    const res = await fetch('/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name, priority, category, status: 'todo' }),
-    })
-    if (!res.ok) return
-    const task: Task = await res.json()
-    setTasks((prev) => sortByPriority([...prev, task]))
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(changes)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (!error && data) {
+      setTasks((prev) =>
+        sortByPriority(prev.map((t) => (t.id === id ? (data as Task) : t)))
+      )
+    }
   }
 
-  async function updateTask(id: number, changes: Partial<Pick<Task, 'name' | 'priority' | 'category' | 'status'>>) {
-    const res = await fetch(`/api/tasks/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(changes),
-    })
-    if (!res.ok) return
-    const updated: Task = await res.json()
-    setTasks((prev) =>
-      sortByPriority(prev.map((t) => (t.id === id ? updated : t)))
-    )
-  }
-
-  async function deleteTask(id: number) {
-    const res = await fetch(`/api/tasks/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    })
-    if (!res.ok) return
-    setTasks((prev) => prev.filter((t) => t.id !== id))
+  async function deleteTask(id: string) {
+    const { error } = await supabase.from('tasks').delete().eq('id', id)
+    if (!error) setTasks((prev) => prev.filter((t) => t.id !== id))
   }
 
   function cycleStatus(task: Task) {
