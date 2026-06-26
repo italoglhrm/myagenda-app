@@ -1,34 +1,40 @@
 import { useState, useEffect } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { supabase } from '../lib/supabase'
 
 export function useAuth() {
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null)
+  const [session, setSession] = useState<Session | null | undefined>(undefined)
 
   useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data) => setAuthenticated(data.authenticated))
-      .catch(() => setAuthenticated(false))
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  async function login(username: string, password: string): Promise<string | null> {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ username, password }),
+  async function sendMagicLink(email: string): Promise<string | null> {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
     })
-    const data = await res.json()
-    if (res.ok) {
-      setAuthenticated(true)
-      return null
-    }
-    return data.error ?? 'Login failed'
+    return error ? error.message : null
   }
 
   async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-    setAuthenticated(false)
+    await supabase.auth.signOut()
   }
 
-  return { authenticated, login, logout }
+  return {
+    session,
+    authenticated: session === undefined ? null : session !== null,
+    sendMagicLink,
+    logout,
+  }
 }
