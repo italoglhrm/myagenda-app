@@ -1,8 +1,9 @@
 import { Trash2, CalendarDays } from 'lucide-react'
 import type { Task } from '../types'
-import { PRIORITY_COLORS, PRIORITY_LABELS, CATEGORY_LABELS, STATUS_LABELS } from '../types'
+import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
 import { dueDateLabel, isOverdue } from '../lib/date'
+import { useLanguage } from '../contexts/LanguageContext'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function TaskCard({ task, onToggleDone, onDelete, className }: Props) {
+  const { lang, t } = useLanguage()
   const isDone = task.status === 'done'
   const colors = PRIORITY_COLORS[task.priority]
   const CategoryIcon = CATEGORY_ICON_MAP[task.category]
@@ -41,16 +43,16 @@ export function TaskCard({ task, onToggleDone, onDelete, className }: Props) {
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <Badge variant={task.priority as any} className="hidden sm:flex">
           <span className={cn('priority-dot', colors.dot)} />
-          {PRIORITY_LABELS[task.priority]}
+          {t(task.priority)}
         </Badge>
 
         <Badge variant="muted" className="hidden sm:flex gap-1 items-center">
           <CategoryIcon className="h-3 w-3" />
-          {CATEGORY_LABELS[task.category]}
+          {t(task.category)}
         </Badge>
 
         <Badge variant="muted" className="hidden md:flex">
-          {STATUS_LABELS[task.status]}
+          {t(task.status)}
         </Badge>
 
         {task.due_date && (
@@ -62,7 +64,7 @@ export function TaskCard({ task, onToggleDone, onDelete, className }: Props) {
             )}
           >
             <CalendarDays className="h-3 w-3" />
-            {dueDateLabel(task.due_date)}
+            {dueDateLabel(task.due_date, lang)}
           </Badge>
         )}
 
@@ -72,13 +74,13 @@ export function TaskCard({ task, onToggleDone, onDelete, className }: Props) {
               variant="destructive"
               size="icon-sm"
               className="opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Delete task"
+              title={t('deleteTaskTitle')}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           }
-          title="Delete task?"
-          description={`"${task.name}" will be permanently removed.`}
+          title={t('deleteTaskTitle')}
+          description={`"${task.name}" ${t('permanentlyRemoved')}`}
           onConfirm={() => onDelete(task.id)}
         />
       </div>

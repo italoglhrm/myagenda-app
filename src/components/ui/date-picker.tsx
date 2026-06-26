@@ -2,18 +2,14 @@ import * as React from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import { ChevronLeft, ChevronRight, CalendarDays, X } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useLanguage } from '../../contexts/LanguageContext'
+import { translations } from '../../lib/i18n'
 
 interface Props {
   value: string       // YYYY-MM-DD or ''
   onChange: (value: string) => void
   placeholder?: string
 }
-
-const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
 
 function parseLocal(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number)
@@ -27,15 +23,6 @@ function toISO(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-function formatLabel(iso: string): string {
-  const date = parseLocal(iso)
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
-  if (date.getTime() === today.getTime()) return 'Today'
-  if (date.getTime() === tomorrow.getTime()) return 'Tomorrow'
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
 function getDays(year: number, month: number): (Date | null)[] {
   const first = new Date(year, month, 1)
   const last = new Date(year, month + 1, 0)
@@ -44,7 +31,11 @@ function getDays(year: number, month: number): (Date | null)[] {
   return cells
 }
 
-export function DatePicker({ value, onChange, placeholder = 'Due date' }: Props) {
+export function DatePicker({ value, onChange, placeholder }: Props) {
+  const { lang, t } = useLanguage()
+  const MONTHS = translations[lang].months as readonly string[]
+  const DAYS = translations[lang].weekDays as readonly string[]
+
   const today = React.useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d }, [])
   const selected = value ? parseLocal(value) : null
   const [open, setOpen] = React.useState(false)
@@ -53,7 +44,17 @@ export function DatePicker({ value, onChange, placeholder = 'Due date' }: Props)
     return { year: base.getFullYear(), month: base.getMonth() }
   })
 
-  // Keep cursor in sync when value changes externally
+  const effectivePlaceholder = placeholder ?? t('dueDate')
+
+  function formatLabel(iso: string): string {
+    const date = parseLocal(iso)
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+    if (date.getTime() === today.getTime()) return t('today')
+    if (date.getTime() === tomorrow.getTime()) return t('tomorrow')
+    const locale = lang === 'pt' ? 'pt-BR' : 'en-US'
+    return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+  }
+
   React.useEffect(() => {
     if (selected) setCursor({ year: selected.getFullYear(), month: selected.getMonth() })
   }, [value])
@@ -89,7 +90,7 @@ export function DatePicker({ value, onChange, placeholder = 'Due date' }: Props)
           )}
         >
           <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
-          <span className="hidden sm:inline">{value ? formatLabel(value) : placeholder}</span>
+          <span className="hidden sm:inline">{value ? formatLabel(value) : effectivePlaceholder}</span>
           {value && (
             <span
               role="button"
@@ -177,14 +178,14 @@ export function DatePicker({ value, onChange, placeholder = 'Due date' }: Props)
               onClick={() => { onChange(''); setOpen(false) }}
               className="text-xs text-muted hover:text-foreground transition-colors"
             >
-              Clear
+              {t('clear')}
             </button>
             <button
               type="button"
               onClick={() => pick(today)}
               className="text-xs text-accent hover:text-accent-hover font-medium transition-colors"
             >
-              Today
+              {t('today')}
             </button>
           </div>
         </Popover.Content>

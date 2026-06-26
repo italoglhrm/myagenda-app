@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
-import { LogOut, List, LayoutDashboard, CalendarDays, Loader2, PanelLeftOpen, Layers } from 'lucide-react'
+import { LogOut, List, LayoutDashboard, CalendarDays, Loader2, PanelLeftOpen, Layers, Globe } from 'lucide-react'
 import type { View } from './types'
 import { useAuth } from './hooks/useAuth'
 import { useTasks } from './hooks/useTasks'
 import { useProjects } from './hooks/useProjects'
 import { useTheme } from './hooks/useTheme'
+import { useLanguage, LanguageProvider } from './contexts/LanguageContext'
+import type { TranslationKey } from './lib/i18n'
 import { LoginScreen } from './components/LoginScreen'
 import { AddTaskBar } from './components/AddTaskBar'
 import { ListView } from './components/ListView'
@@ -16,18 +18,12 @@ import { LogoIcon } from './components/LogoIcon'
 import { Button } from './components/ui/button'
 import { cn } from './lib/utils'
 
-const VIEW_TABS: { id: View; label: string; icon: React.ReactNode }[] = [
-  { id: 'list', label: 'List', icon: <List className="h-4 w-4" /> },
-  { id: 'kanban', label: 'Board', icon: <LayoutDashboard className="h-4 w-4" /> },
-  { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="h-4 w-4" /> },
-]
-
-export default function App() {
+function AppInner() {
   const { authenticated, sendMagicLink, logout } = useAuth()
   const { theme, toggle: toggleTheme } = useTheme()
-  const { projects, createProject, deleteProject } = useProjects()
+  const { projects, createProject, updateProject, deleteProject } = useProjects()
+  const { lang, toggle: toggleLang, t } = useLanguage()
 
-  // null = Inbox (tasks with no project)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [view, setView] = useState<View>('list')
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -47,6 +43,12 @@ export default function App() {
   }, [tasks])
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null
+
+  const VIEW_TABS: { id: View; labelKey: TranslationKey; icon: React.ReactNode }[] = [
+    { id: 'list',   labelKey: 'list',   icon: <List className="h-4 w-4" /> },
+    { id: 'kanban', labelKey: 'board',  icon: <LayoutDashboard className="h-4 w-4" /> },
+    { id: 'agenda', labelKey: 'agenda', icon: <CalendarDays className="h-4 w-4" /> },
+  ]
 
   if (authenticated === null) {
     return (
@@ -82,19 +84,16 @@ export default function App() {
           <span className="font-semibold text-sm tracking-tight">MyAgenda</span>
         </div>
 
-        {/* Context label — project name or Inbox */}
+        {/* Context label */}
         <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted">
           <span>/</span>
           {selectedProject ? (
             <span className="flex items-center gap-1.5 text-foreground font-medium">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: selectedProject.color }}
-              />
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: selectedProject.color }} />
               {selectedProject.name}
             </span>
           ) : (
-            <span className="text-foreground font-medium">Inbox</span>
+            <span className="text-foreground font-medium">{t('inbox')}</span>
           )}
         </div>
 
@@ -112,17 +111,28 @@ export default function App() {
               )}
             >
               {tab.icon}
-              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="hidden sm:inline">{t(tab.labelKey)}</span>
             </button>
           ))}
         </nav>
 
         {/* Right actions */}
         <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-<ThemeToggle theme={theme} onToggle={toggleTheme} />
+          {/* Language toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleLang}
+            className="gap-1.5 text-muted hover:text-foreground font-medium tabular-nums"
+            title={lang === 'en' ? 'Switch to Portuguese' : 'Mudar para Inglês'}
+          >
+            <Globe className="h-3.5 w-3.5" />
+            <span className="text-xs">{lang === 'en' ? 'PT' : 'EN'}</span>
+          </Button>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
           <Button variant="ghost" size="sm" onClick={logout} className="gap-1.5">
             <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Log out</span>
+            <span className="hidden sm:inline">{t('logout')}</span>
           </Button>
         </div>
       </header>
@@ -130,42 +140,30 @@ export default function App() {
       {/* ── Body ── */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
-        <div
-          className={cn(
-            'flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out',
-            sidebarOpen ? 'w-52' : 'w-0'
-          )}
-        >
+        <div className={cn('flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out', sidebarOpen ? 'w-52' : 'w-0')}>
           <div className="w-52 h-full">
             <Sidebar
               projects={projects}
               selectedProjectId={selectedProjectId}
               taskCounts={taskCounts}
-              onSelect={(id) => {
-                setSelectedProjectId(id)
-                setView('list')
-              }}
+              onSelect={(id) => { setSelectedProjectId(id); setView('list') }}
               onCreate={createProject}
               onDelete={deleteProject}
+              onUpdate={updateProject}
               onToggle={() => setSidebarOpen(false)}
             />
           </div>
         </div>
 
         {/* Collapsed sidebar re-open button */}
-        <div
-          className={cn(
-            'flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out',
-            sidebarOpen ? 'w-0' : 'w-10'
-          )}
-        >
+        <div className={cn('flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out', sidebarOpen ? 'w-0' : 'w-10')}>
           <div className="w-10 h-full flex items-start pt-2 justify-center border-r border-border">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(true)}
               className="text-muted hover:text-foreground"
-              title="Open sidebar"
+              title={t('openSidebar')}
             >
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
@@ -174,10 +172,8 @@ export default function App() {
 
         {/* Main column */}
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
-          {/* Sticky add bar */}
           <AddTaskBar onAdd={addTask} />
 
-          {/* Scrollable content */}
           <main className="flex-1 overflow-y-auto px-6 py-4">
             {/* All-projects toggle */}
             <div className="flex items-center justify-end mb-4">
@@ -185,13 +181,11 @@ export default function App() {
                 onClick={() => setShowAll((v) => !v)}
                 className={cn(
                   'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
-                  showAll
-                    ? 'bg-accent-light text-accent'
-                    : 'text-muted hover:text-foreground hover:bg-border/50'
+                  showAll ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
                 )}
               >
                 <Layers className="h-3 w-3" />
-                All projects
+                {t('allProjects')}
               </button>
             </div>
 
@@ -202,11 +196,7 @@ export default function App() {
             ) : (
               <>
                 {view === 'list' && (
-                  <ListView
-                    tasks={tasks}
-                    onToggleDone={handleToggleDone}
-                    onDelete={deleteTask}
-                  />
+                  <ListView tasks={tasks} onToggleDone={handleToggleDone} onDelete={deleteTask} />
                 )}
                 {view === 'kanban' && (
                   <KanbanView
@@ -229,5 +219,13 @@ export default function App() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppInner />
+    </LanguageProvider>
   )
 }

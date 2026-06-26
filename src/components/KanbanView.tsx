@@ -12,9 +12,10 @@ import {
 } from '@dnd-kit/core'
 import { ArrowRight, Check, Trash2, CalendarDays } from 'lucide-react'
 import type { Task, Status, Priority } from '../types'
-import { PRIORITY_COLORS, PRIORITY_LABELS, CATEGORY_LABELS } from '../types'
+import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
 import { dueDateLabel, isOverdue } from '../lib/date'
+import { useLanguage } from '../contexts/LanguageContext'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { ConfirmDialog } from './ui/confirm-dialog'
@@ -27,10 +28,10 @@ interface Props {
   onMove: (id: string, status: Status) => void
 }
 
-const COLUMNS: { status: Status; label: string; color: string; bg: string }[] = [
-  { status: 'todo',       label: 'To Do',       color: 'text-muted',   bg: 'bg-border/30' },
-  { status: 'inprogress', label: 'In Progress',  color: 'text-normal',  bg: 'bg-normal-light/60' },
-  { status: 'done',       label: 'Done',         color: 'text-low',     bg: 'bg-low-light/60' },
+const COLUMN_META: { status: Status; color: string; bg: string }[] = [
+  { status: 'todo',       color: 'text-muted',  bg: 'bg-border/30' },
+  { status: 'inprogress', color: 'text-normal', bg: 'bg-normal-light/60' },
+  { status: 'done',       color: 'text-low',    bg: 'bg-low-light/60' },
 ]
 
 const PRIORITY_ORDER: Record<Priority, number> = {
@@ -38,11 +39,13 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 }
 
 // ── Card (pure UI, no drag wiring) ────────────────────────────────────────────
-function CardContent({ task, onCycle, onDelete, dimmed = false }: {
+function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang }: {
   task: Task
   onCycle: () => void
   onDelete: () => void
   dimmed?: boolean
+  t: (key: any) => string
+  lang: 'en' | 'pt'
 }) {
   const colors = PRIORITY_COLORS[task.priority]
   const isDone = task.status === 'done'
@@ -72,8 +75,8 @@ function CardContent({ task, onCycle, onDelete, dimmed = false }: {
                 <Trash2 className="h-3 w-3" />
               </Button>
             }
-            title="Delete task?"
-            description={`"${task.name}" will be permanently removed.`}
+            title={t('deleteTaskTitle')}
+            description={`"${task.name}" ${t('permanentlyRemoved')}`}
             onConfirm={onDelete}
           />
         </span>
@@ -83,11 +86,11 @@ function CardContent({ task, onCycle, onDelete, dimmed = false }: {
         <div className="flex items-center gap-1 flex-wrap">
           <Badge variant={task.priority as any} className="text-[11px]">
             <span className={cn('w-1.5 h-1.5 rounded-full', colors.dot)} />
-            {PRIORITY_LABELS[task.priority]}
+            {t(task.priority)}
           </Badge>
           <Badge variant="muted" className="text-[11px] items-center gap-1">
             <CategoryIcon className="h-3 w-3" />
-            {CATEGORY_LABELS[task.category]}
+            {t(task.category)}
           </Badge>
           {task.due_date && (
             <Badge
@@ -98,7 +101,7 @@ function CardContent({ task, onCycle, onDelete, dimmed = false }: {
               )}
             >
               <CalendarDays className="h-3 w-3" />
-              {dueDateLabel(task.due_date)}
+              {dueDateLabel(task.due_date, lang)}
             </Badge>
           )}
         </div>
@@ -109,7 +112,7 @@ function CardContent({ task, onCycle, onDelete, dimmed = false }: {
             <Button
               variant="ghost"
               size="icon-sm"
-              title="Move to next stage"
+              title={t('moveToNextStage')}
               className="flex-shrink-0 text-muted hover:text-accent"
             >
               <ArrowRight className="h-3.5 w-3.5" />
@@ -125,10 +128,12 @@ function CardContent({ task, onCycle, onDelete, dimmed = false }: {
 }
 
 // ── Draggable card ─────────────────────────────────────────────────────────────
-function DraggableCard({ task, onCycle, onDelete }: {
+function DraggableCard({ task, onCycle, onDelete, t, lang }: {
   task: Task
   onCycle: () => void
   onDelete: () => void
+  t: (key: any) => string
+  lang: 'en' | 'pt'
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
 
@@ -144,13 +149,13 @@ function DraggableCard({ task, onCycle, onDelete }: {
       {...attributes}
       {...listeners}
     >
-      <CardContent task={task} onCycle={onCycle} onDelete={onDelete} />
+      <CardContent task={task} onCycle={onCycle} onDelete={onDelete} t={t} lang={lang} />
     </div>
   )
 }
 
 // ── Droppable column ───────────────────────────────────────────────────────────
-function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete }: {
+function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t, lang }: {
   status: Status
   label: string
   color: string
@@ -158,6 +163,8 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete }:
   tasks: Task[]
   onCycle: (task: Task) => void
   onDelete: (id: string) => void
+  t: (key: any) => string
+  lang: 'en' | 'pt'
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
@@ -179,7 +186,7 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete }:
       >
         {tasks.length === 0 ? (
           <div className="flex items-center justify-center py-8 text-muted/50 text-sm border-2 border-dashed border-border rounded-lg">
-            {status === 'done' ? 'Nothing done yet' : 'Empty'}
+            {status === 'done' ? t('nothingDoneYet') : t('empty')}
           </div>
         ) : (
           tasks.map((task) => (
@@ -188,6 +195,8 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete }:
               task={task}
               onCycle={() => onCycle(task)}
               onDelete={() => onDelete(task.id)}
+              t={t}
+              lang={lang}
             />
           ))
         )}
@@ -198,7 +207,9 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete }:
 
 // ── Main view ─────────────────────────────────────────────────────────────────
 export function KanbanView({ tasks, onCycle, onDelete, onMove }: Props) {
+  const { lang, t } = useLanguage()
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const COLUMNS = COLUMN_META.map((c) => ({ ...c, label: t(c.status) }))
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -233,6 +244,8 @@ export function KanbanView({ tasks, onCycle, onDelete, onMove }: Props) {
             tasks={sorted(col.status)}
             onCycle={onCycle}
             onDelete={onDelete}
+            t={t}
+            lang={lang}
           />
         ))}
       </div>
@@ -244,6 +257,8 @@ export function KanbanView({ tasks, onCycle, onDelete, onMove }: Props) {
               task={activeTask}
               onCycle={() => {}}
               onDelete={() => {}}
+              t={t}
+              lang={lang}
             />
           </div>
         )}

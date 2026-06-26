@@ -1,13 +1,13 @@
-import { CalendarDays, CheckCircle2, Inbox } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Inbox, Trash2 } from 'lucide-react'
 import type { Task } from '../types'
-import { PRIORITY_COLORS, PRIORITY_LABELS, CATEGORY_LABELS } from '../types'
+import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
 import { parseDateLocal, isOverdue } from '../lib/date'
+import { useLanguage } from '../contexts/LanguageContext'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { ConfirmDialog } from './ui/confirm-dialog'
 import { cn } from '../lib/utils'
-import { Trash2 } from 'lucide-react'
 
 interface Props {
   tasks: Task[]
@@ -23,7 +23,12 @@ interface Group {
   tasks: Task[]
 }
 
-function buildGroups(tasks: Task[]): Group[] {
+function buildGroups(
+  tasks: Task[],
+  lang: 'en' | 'pt',
+  labels: { overdue: string; today: string; tomorrow: string; noDate: string }
+): Group[] {
+  const locale = lang === 'pt' ? 'pt-BR' : 'en-US'
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -48,13 +53,13 @@ function buildGroups(tasks: Task[]): Group[] {
   const groups: Group[] = []
 
   if (overdue.length) groups.push({
-    key: 'overdue', label: 'Overdue', variant: 'overdue', tasks: overdue,
+    key: 'overdue', label: labels.overdue, variant: 'overdue', tasks: overdue,
   })
 
   if (todayTasks.length) groups.push({
     key: 'today',
-    label: 'Today',
-    sublabel: today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+    label: labels.today,
+    sublabel: today.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' }),
     variant: 'today',
     tasks: todayTasks,
   })
@@ -66,35 +71,39 @@ function buildGroups(tasks: Task[]): Group[] {
     const isTomorrow = d.getTime() === tomorrow.getTime()
     groups.push({
       key: iso,
-      label: isTomorrow ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'long' }),
-      sublabel: isTomorrow
-        ? d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-        : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+      label: isTomorrow ? labels.tomorrow : d.toLocaleDateString(locale, { weekday: 'long' }),
+      sublabel: d.toLocaleDateString(locale, { month: 'long', day: 'numeric' }),
       variant: 'upcoming',
       tasks: byDate[iso],
     })
   }
 
   if (undated.length) groups.push({
-    key: 'undated', label: 'No date', variant: 'undated', tasks: undated,
+    key: 'undated', label: labels.noDate, variant: 'undated', tasks: undated,
   })
 
   return groups
 }
 
 const GROUP_STYLES: Record<Group['variant'], { header: string; dot: string }> = {
-  overdue:  { header: 'text-urgent',   dot: 'bg-urgent' },
-  today:    { header: 'text-accent',   dot: 'bg-accent' },
+  overdue:  { header: 'text-urgent',    dot: 'bg-urgent' },
+  today:    { header: 'text-accent',    dot: 'bg-accent' },
   upcoming: { header: 'text-foreground', dot: 'bg-border' },
-  undated:  { header: 'text-muted',    dot: 'bg-border' },
+  undated:  { header: 'text-muted',     dot: 'bg-border' },
 }
 
 export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
-  const groups = buildGroups(tasks)
+  const { lang, t } = useLanguage()
+  const groups = buildGroups(tasks, lang, {
+    overdue: t('overdue'),
+    today: t('today'),
+    tomorrow: t('tomorrow'),
+    noDate: t('noDate'),
+  })
   const total = groups.reduce((n, g) => n + g.tasks.length, 0)
 
   if (total === 0) {
-    const hasTasks = tasks.some((t) => t.status !== 'done')
+    const hasTasks = tasks.some((tk) => tk.status !== 'done')
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-low-light border border-low-border mb-4">
@@ -103,12 +112,10 @@ export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
             : <CheckCircle2 className="h-6 w-6 text-low" />}
         </div>
         <p className="text-foreground font-medium">
-          {hasTasks ? 'No dates set' : 'All done!'}
+          {hasTasks ? t('noDatesSet') : t('allDone')}
         </p>
         <p className="text-muted text-sm mt-1">
-          {hasTasks
-            ? 'Add a due date to tasks to see them here.'
-            : 'Nothing scheduled. Enjoy the day.'}
+          {hasTasks ? t('addDueDateHint') : t('nothingScheduled')}
         </p>
       </div>
     )
@@ -118,9 +125,9 @@ export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
     <div className="space-y-8 animate-fade-in max-w-2xl">
       {groups.map((group) => {
         const style = GROUP_STYLES[group.variant]
+        const count = group.tasks.length
         return (
           <section key={group.key}>
-            {/* Group header */}
             <div className="flex items-center gap-2 mb-3">
               <span className={cn('w-2 h-2 rounded-full flex-shrink-0', style.dot)} />
               <h2 className={cn('text-sm font-semibold', style.header)}>{group.label}</h2>
@@ -128,11 +135,10 @@ export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
                 <span className="text-xs text-muted">{group.sublabel}</span>
               )}
               <span className="ml-auto text-xs text-muted tabular-nums">
-                {group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''}
+                {count} {count !== 1 ? t('taskPlural') : t('taskSingular')}
               </span>
             </div>
 
-            {/* Task rows */}
             <div className="space-y-1.5">
               {group.tasks.map((task) => {
                 const colors = PRIORITY_COLORS[task.priority]
@@ -150,24 +156,26 @@ export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
                         : 'border-border hover:border-accent/25'
                     )}
                   >
-                    {/* Priority dot */}
                     <span className={cn('w-2 h-2 rounded-full flex-shrink-0', colors.dot)} />
 
-                    {/* Name */}
                     <p className="flex-1 min-w-0 text-sm font-medium truncate">{task.name}</p>
 
-                    {/* Badges */}
                     <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
                       <Badge variant={task.priority as any} className="text-[11px]">
-                        {PRIORITY_LABELS[task.priority]}
+                        {t(task.priority)}
                       </Badge>
                       <Badge variant="muted" className="text-[11px] items-center gap-1">
                         <CategoryIcon className="h-3 w-3" />
-                        {CATEGORY_LABELS[task.category]}
+                        {t(task.category)}
                       </Badge>
+                      {task.due_date && overdue && (
+                        <Badge variant="muted" className="text-[11px] items-center gap-1 bg-urgent-light text-urgent border-urgent-border">
+                          <CalendarDays className="h-3 w-3" />
+                          {isOverdue(task.due_date) && t('overdue')}
+                        </Badge>
+                      )}
                     </div>
 
-                    {/* Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="outline"
@@ -176,7 +184,7 @@ export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
                         className="h-7 gap-1.5 hover:text-low hover:border-low-border hover:bg-low-light"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">Done</span>
+                        <span className="hidden sm:inline text-xs">{t('done')}</span>
                       </Button>
                       <ConfirmDialog
                         trigger={
@@ -184,8 +192,8 @@ export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         }
-                        title="Delete task?"
-                        description={`"${task.name}" will be permanently removed.`}
+                        title={t('deleteTaskTitle')}
+                        description={`"${task.name}" ${t('permanentlyRemoved')}`}
                         onConfirm={() => onDelete(task.id)}
                       />
                     </div>

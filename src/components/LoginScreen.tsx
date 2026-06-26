@@ -4,6 +4,7 @@ import { Input } from './ui/input'
 import { ThemeToggle } from './ThemeToggle'
 import { Loader2, MailCheck, AlertTriangle } from 'lucide-react'
 import { LogoIcon } from './LogoIcon'
+import { useLanguage } from '../contexts/LanguageContext'
 
 interface Props {
   onSendMagicLink: (email: string) => Promise<string | null>
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function LoginScreen({ onSendMagicLink, theme, onToggleTheme }: Props) {
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -56,7 +58,7 @@ export function LoginScreen({ onSendMagicLink, theme, onToggleTheme }: Props) {
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
             MyAgenda
           </h1>
-          <p className="text-muted text-sm mt-1">Your personal agenda</p>
+          <p className="text-muted text-sm mt-1">{t('loginSubtitle')}</p>
         </div>
 
         {/* Card */}
@@ -66,15 +68,13 @@ export function LoginScreen({ onSendMagicLink, theme, onToggleTheme }: Props) {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-low-light border border-low-border mb-4">
                 <MailCheck className="h-6 w-6 text-low" />
               </div>
-              <p className="font-medium text-foreground">Check your inbox</p>
+              <p className="font-medium text-foreground">{t('checkEmail')}</p>
               <p className="text-sm text-muted mt-1.5">
-                We sent a magic link to{' '}
+                {t('magicLinkSentTo')}{' '}
                 <span className="text-foreground font-medium">{email}</span>
               </p>
               <p className="text-xs text-muted mt-3">
-                Click the link in the email to sign in.
-                <br />
-                You can close this tab.
+                {t('clickLinkToSignIn')}
               </p>
               <button
                 onClick={() => { setSent(false); setEmail('') }}
@@ -91,7 +91,7 @@ export function LoginScreen({ onSendMagicLink, theme, onToggleTheme }: Props) {
                 </label>
                 <Input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t('emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoFocus
@@ -114,7 +114,7 @@ export function LoginScreen({ onSendMagicLink, theme, onToggleTheme }: Props) {
                 disabled={loading}
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? 'Sending…' : 'Send magic link'}
+                {loading ? t('sending') : t('sendMagicLink')}
               </Button>
             </form>
           )}

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import type { Priority, Category } from '../types'
-import { PRIORITY_LABELS, PRIORITY_COLORS, CATEGORY_LABELS } from '../types'
+import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
+import { useLanguage } from '../contexts/LanguageContext'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { DatePicker } from './ui/date-picker'
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function AddTaskBar({ onAdd }: Props) {
+  const { t } = useLanguage()
   const [name, setName] = useState('')
   const [priority, setPriority] = useState<Priority>('normal')
   const [category, setCategory] = useState<Category>('work')
@@ -41,7 +43,7 @@ export function AddTaskBar({ onAdd }: Props) {
         className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-2"
       >
         <Input
-          placeholder="Add a new task…"
+          placeholder={t('addTaskPlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="flex-1 min-w-0"
@@ -53,18 +55,18 @@ export function AddTaskBar({ onAdd }: Props) {
           }}
         />
 
-        <DatePicker value={dueDate} onChange={setDueDate} />
+        <DatePicker value={dueDate} onChange={setDueDate} placeholder={t('dueDate')} />
 
         <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
           <SelectTrigger className="w-[130px] flex-shrink-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {(Object.keys(PRIORITY_LABELS) as Priority[]).map((p) => (
+            {(['urgent','high','normal','low'] as Priority[]).map((p) => (
               <SelectItem key={p} value={p}>
                 <span className="flex items-center gap-1.5">
                   <span className={cn('w-2 h-2 rounded-full flex-shrink-0', PRIORITY_COLORS[p].dot)} />
-                  {PRIORITY_LABELS[p]}
+                  {t(p)}
                 </span>
               </SelectItem>
             ))}
@@ -76,13 +78,13 @@ export function AddTaskBar({ onAdd }: Props) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => {
-              const Icon = CATEGORY_ICON_MAP[c as Category]
+            {(['work','personal','health','study','other'] as Category[]).map((c) => {
+              const Icon = CATEGORY_ICON_MAP[c]
               return (
                 <SelectItem key={c} value={c}>
                   <span className="flex items-center gap-1.5">
                     <Icon className="h-3.5 w-3.5 text-muted" />
-                    {CATEGORY_LABELS[c as Category]}
+                    {t(c)}
                   </span>
                 </SelectItem>
               )
@@ -92,7 +94,7 @@ export function AddTaskBar({ onAdd }: Props) {
 
         <Button type="submit" size="default" className="flex-shrink-0 gap-1.5">
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Add</span>
+          <span className="hidden sm:inline">{t('add')}</span>
         </Button>
       </form>
     </div>
