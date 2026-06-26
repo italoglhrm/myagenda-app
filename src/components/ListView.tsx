@@ -1,6 +1,7 @@
 import { Inbox } from 'lucide-react'
 import type { Task, Priority } from '../types'
-import { PRIORITY_LABELS, PRIORITY_COLORS } from '../types'
+import { PRIORITY_COLORS } from '../types'
+import { useLanguage } from '../contexts/LanguageContext'
 import { TaskCard } from './TaskCard'
 import { cn } from '../lib/utils'
 
@@ -10,19 +11,21 @@ interface Props {
   onDelete: (id: string) => void
 }
 
-const PRIORITY_EMPTY: Record<Priority, string> = {
-  urgent: 'No urgent tasks — nice!',
-  high: 'Nothing high priority.',
-  normal: 'No normal tasks.',
-  low: 'Nothing on the backburner.',
-}
-
 const PRIORITY_ORDER: Priority[] = ['urgent', 'high', 'normal', 'low']
 
 export function ListView({ tasks, onToggleDone, onDelete }: Props) {
+  const { t } = useLanguage()
+
+  const PRIORITY_EMPTY: Record<Priority, string> = {
+    urgent: t('noUrgentTasks'),
+    high:   t('noHighTasks'),
+    normal: t('noNormalTasks'),
+    low:    t('noLowTasks'),
+  }
+
   const byPriority = PRIORITY_ORDER.reduce<Record<Priority, Task[]>>(
     (acc, p) => {
-      acc[p] = tasks.filter((t) => t.priority === p)
+      acc[p] = tasks.filter((task) => task.priority === p)
       return acc
     },
     { urgent: [], high: [], normal: [], low: [] }
@@ -34,8 +37,8 @@ export function ListView({ tasks, onToggleDone, onDelete }: Props) {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-accent-light border border-accent/20 mb-4">
           <Inbox className="h-6 w-6 text-accent" />
         </div>
-        <p className="text-foreground font-medium">All clear!</p>
-        <p className="text-muted text-sm mt-1">Add a task above to get started.</p>
+        <p className="text-foreground font-medium">{t('allClear')}</p>
+        <p className="text-muted text-sm mt-1">{t('addTaskToGetStarted')}</p>
       </div>
     )
   }
@@ -45,17 +48,18 @@ export function ListView({ tasks, onToggleDone, onDelete }: Props) {
       {PRIORITY_ORDER.map((priority) => {
         const group = byPriority[priority]
         const colors = PRIORITY_COLORS[priority]
+        const activeCount = group.filter((task) => task.status !== 'done').length
 
         return (
           <section key={priority}>
             <div className="flex items-center gap-2 mb-2">
               <div className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', colors.dot)} />
               <h2 className={cn('text-xs font-semibold uppercase tracking-widest', colors.text)}>
-                {PRIORITY_LABELS[priority]}
+                {t(priority)}
               </h2>
-              {group.filter((t) => t.status !== 'done').length > 0 && (
+              {activeCount > 0 && (
                 <span className="text-xs text-muted">
-                  {group.filter((t) => t.status !== 'done').length} remaining
+                  {activeCount} {t('remaining')}
                 </span>
               )}
             </div>

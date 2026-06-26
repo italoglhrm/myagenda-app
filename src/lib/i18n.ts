@@ -74,6 +74,14 @@ export const translations = {
     checkEmail: 'Check your email',
     magicLinkSentTo: "We've sent a login link to",
     clickLinkToSignIn: 'Click the link in the email to sign in.',
+    // list view empty states
+    allClear: 'All clear!',
+    addTaskToGetStarted: 'Add a task above to get started.',
+    noUrgentTasks: 'No urgent tasks — nice!',
+    noHighTasks: 'Nothing high priority.',
+    noNormalTasks: 'No normal tasks.',
+    noLowTasks: 'Nothing on the backburner.',
+    remaining: 'remaining',
     // delete project dialog description suffix
     deleteProjectSuffix: 'will be deleted. Its tasks will move to Inbox.',
   },
@@ -150,6 +158,14 @@ export const translations = {
     checkEmail: 'Verifique seu e-mail',
     magicLinkSentTo: 'Enviamos um link de acesso para',
     clickLinkToSignIn: 'Clique no link do e-mail para entrar.',
+    // list view empty states
+    allClear: 'Tudo limpo!',
+    addTaskToGetStarted: 'Adicione uma tarefa acima para começar.',
+    noUrgentTasks: 'Nenhuma tarefa urgente — ótimo!',
+    noHighTasks: 'Nada de alta prioridade.',
+    noNormalTasks: 'Nenhuma tarefa normal.',
+    noLowTasks: 'Nada em segundo plano.',
+    remaining: 'restantes',
     // delete project dialog description suffix
     deleteProjectSuffix: 'será excluído. As tarefas irão para a Caixa de entrada.',
   },
