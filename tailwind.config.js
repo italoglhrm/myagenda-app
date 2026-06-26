@@ -60,10 +60,16 @@ export default {
           from: { opacity: '0', transform: 'translateX(-8px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
         },
+        // Dialog-safe: only opacity+scale, never overrides centering transforms
+        'dialog-in': {
+          from: { opacity: '0', scale: '0.96' },
+          to: { opacity: '1', scale: '1' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.18s ease-out',
         'slide-in': 'slide-in 0.15s ease-out',
+        'dialog-in': 'dialog-in 0.15s ease-out',
       },
     },
   },
