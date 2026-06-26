@@ -1,7 +1,26 @@
+# dependencies
 node_modules/
+
+# build output
 dist/
 dist-server/
+
+# environment variables
 .env
+.env.local
+.env.production
+
+# database
 *.db
 *.db-journal
+
+# OS
 .DS_Store
+Thumbs.db
+
+# editor
+.vscode/settings.json
+*.log
+
+# test / scratch files
+test-*.mjs
