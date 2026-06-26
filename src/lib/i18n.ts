@@ -67,7 +67,7 @@ export const translations = {
     weekDays: ['Su','Mo','Tu','We','Th','Fr','Sa'],
     // login
     loginTitle: 'Welcome to MyAgenda',
-    loginSubtitle: 'Enter your email to receive a magic link — no password needed.',
+    loginSubtitle: 'Enter your email to receive a magic link, no password needed.',
     emailPlaceholder: 'your@email.com',
     sendMagicLink: 'Send magic link',
     sending: 'Sending…',
@@ -77,7 +77,7 @@ export const translations = {
     // list view empty states
     allClear: 'All clear!',
     addTaskToGetStarted: 'Add a task above to get started.',
-    noUrgentTasks: 'No urgent tasks — nice!',
+    noUrgentTasks: 'No urgent tasks, nice!',
     noHighTasks: 'Nothing high priority.',
     noNormalTasks: 'No normal tasks.',
     noLowTasks: 'Nothing on the backburner.',
@@ -151,7 +151,7 @@ export const translations = {
     weekDays: ['Do','Se','Te','Qu','Qu','Se','Sá'],
     // login
     loginTitle: 'Bem-vindo ao MyAgenda',
-    loginSubtitle: 'Digite seu e-mail para receber um link mágico — sem senha.',
+    loginSubtitle: 'Digite seu e-mail para receber um link mágico, sem senha.',
     emailPlaceholder: 'seu@email.com',
     sendMagicLink: 'Enviar link mágico',
     sending: 'Enviando…',
@@ -161,7 +161,7 @@ export const translations = {
     // list view empty states
     allClear: 'Tudo limpo!',
     addTaskToGetStarted: 'Adicione uma tarefa acima para começar.',
-    noUrgentTasks: 'Nenhuma tarefa urgente — ótimo!',
+    noUrgentTasks: 'Nenhuma tarefa urgente, ótimo!',
     noHighTasks: 'Nada de alta prioridade.',
     noNormalTasks: 'Nenhuma tarefa normal.',
     noLowTasks: 'Nada em segundo plano.',

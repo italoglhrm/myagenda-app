@@ -28,7 +28,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   function t(key: TranslationKey): string {
     const val = translations[lang][key]
-    // arrays (months/weekDays) should not be used via t() — access directly
+    // arrays (months/weekDays) should not be used via t(), access directly
     return Array.isArray(val) ? '' : (val as string)
   }
 

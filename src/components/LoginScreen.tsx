@@ -121,7 +121,7 @@ export function LoginScreen({ onSendMagicLink, theme, onToggleTheme }: Props) {
         </div>
 
         <p className="text-center text-xs text-muted/60 mt-4">
-          Private personal tool — no password required
+          Private personal tool, no password required
         </p>
       </div>
     </div>
