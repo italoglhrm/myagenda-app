@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Inbox, Plus, Trash2, Check, PanelLeft } from 'lucide-react'
+import { Inbox, Plus, Trash2, Check, PanelLeft, Pencil } from 'lucide-react'
 import type { Project } from '../types'
 import { PROJECT_COLORS } from '../types'
+import { useLanguage } from '../contexts/LanguageContext'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { ConfirmDialog } from './ui/confirm-dialog'
@@ -14,6 +15,7 @@ interface Props {
   onSelect: (id: string | null) => void
   onCreate: (name: string, color: string, description?: string) => Promise<Project | null>
   onDelete: (id: string) => void
+  onUpdate: (id: string, changes: Partial<Pick<Project, 'name' | 'color' | 'description'>>) => Promise<void>
   onToggle: () => void
 }
 
@@ -30,8 +32,10 @@ export function Sidebar({
   onSelect,
   onCreate,
   onDelete,
+  onUpdate,
   onToggle,
 }: Props) {
+  const { t } = useLanguage()
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState<CreateFormState>({
     name: '',
@@ -70,7 +74,7 @@ export function Sidebar({
             size="icon"
             onClick={onToggle}
             className="h-6 w-6 text-muted hover:text-foreground"
-            title="Close sidebar"
+            title={t('closeSidebar')}
           >
             <PanelLeft className="h-3.5 w-3.5" />
           </Button>
@@ -78,7 +82,7 @@ export function Sidebar({
         {/* Inbox */}
         <SidebarItem
           icon={<Inbox className="h-4 w-4" />}
-          label="Inbox"
+          label={t('inbox')}
           count={taskCounts['inbox'] ?? 0}
           selected={selectedProjectId === null}
           onClick={() => onSelect(null)}
@@ -88,7 +92,7 @@ export function Sidebar({
         {projects.length > 0 && (
           <div className="pt-3 pb-1">
             <p className="px-2 text-[11px] font-semibold uppercase tracking-widest text-muted/70 mb-1">
-              Projects
+              {t('projects')}
             </p>
             <div className="space-y-0.5">
               {projects.map((project) => (
@@ -99,6 +103,9 @@ export function Sidebar({
                   selected={selectedProjectId === project.id}
                   onClick={() => onSelect(project.id)}
                   onDelete={() => handleDelete(project.id)}
+                  onUpdate={(changes) => onUpdate(project.id, changes)}
+                  deleteLabel={t('deleteProjectTitle')}
+                  deleteDescription={`"${project.name}" ${t('projectDeletedTasksInbox')}`}
                 />
               ))}
             </div>
@@ -111,14 +118,14 @@ export function Sidebar({
         {creating ? (
           <form onSubmit={handleCreate} className="space-y-2 p-1 animate-fade-in">
             <Input
-              placeholder="Project name"
+              placeholder={t('projectName')}
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               autoFocus
               className="h-8 text-sm"
             />
             <textarea
-              placeholder="Description (optional)"
+              placeholder={t('descriptionOptional')}
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               rows={2}
@@ -155,7 +162,7 @@ export function Sidebar({
                 className="flex-1 h-7 text-xs"
                 disabled={saving || !form.name.trim()}
               >
-                {saving ? 'Creating…' : 'Create'}
+                {saving ? t('creating') : t('create')}
               </Button>
               <Button
                 type="button"
@@ -164,7 +171,7 @@ export function Sidebar({
                 className="h-7 text-xs"
                 onClick={handleCancelCreate}
               >
-                Cancel
+                {t('cancel')}
               </Button>
             </div>
           </form>
@@ -177,7 +184,7 @@ export function Sidebar({
             )}
           >
             <Plus className="h-3.5 w-3.5" />
-            New project
+            {t('newProject')}
           </button>
         )}
       </div>
@@ -228,13 +235,99 @@ function ProjectItem({
   selected,
   onClick,
   onDelete,
+  onUpdate,
+  deleteLabel,
+  deleteDescription,
 }: {
   project: Project
   count: number
   selected: boolean
   onClick: () => void
   onDelete: () => void
+  onUpdate: (changes: Partial<Pick<Project, 'name' | 'color' | 'description'>>) => Promise<void>
+  deleteLabel: string
+  deleteDescription: string
 }) {
+  const { t } = useLanguage()
+  const [editing, setEditing] = useState(false)
+  const [editName, setEditName] = useState(project.name)
+  const [editDescription, setEditDescription] = useState(project.description ?? '')
+  const [editColor, setEditColor] = useState(project.color)
+  const [saving, setSaving] = useState(false)
+
+  function startEdit(e: React.MouseEvent) {
+    e.stopPropagation()
+    setEditName(project.name)
+    setEditDescription(project.description ?? '')
+    setEditColor(project.color)
+    setEditing(true)
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editName.trim()) return
+    setSaving(true)
+    await onUpdate({
+      name: editName.trim(),
+      description: editDescription.trim() || undefined,
+      color: editColor,
+    })
+    setSaving(false)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <form
+        onSubmit={handleSave}
+        onClick={(e) => e.stopPropagation()}
+        className="space-y-2 p-1 animate-fade-in"
+      >
+        <Input
+          placeholder={t('projectName')}
+          value={editName}
+          onChange={(e) => setEditName(e.target.value)}
+          autoFocus
+          className="h-8 text-sm"
+        />
+        <textarea
+          placeholder={t('descriptionOptional')}
+          value={editDescription}
+          onChange={(e) => setEditDescription(e.target.value)}
+          rows={2}
+          className={cn(
+            'w-full rounded border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted/70 resize-none',
+            'focus:border-accent/60 focus:ring-[3px] focus:ring-accent/15 outline-none transition-all'
+          )}
+        />
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {PROJECT_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setEditColor(c)}
+              className={cn(
+                'w-5 h-5 rounded-full transition-all',
+                editColor === c ? 'ring-2 ring-offset-2 ring-offset-card scale-110' : 'hover:scale-110'
+              )}
+              style={{ backgroundColor: c }}
+            >
+              {editColor === c && <Check className="h-3 w-3 text-white m-auto" strokeWidth={3} />}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1.5">
+          <Button type="submit" size="sm" className="flex-1 h-7 text-xs" disabled={saving || !editName.trim()}>
+            {saving ? t('creating') : t('create')}
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)}>
+            {t('cancel')}
+          </Button>
+        </div>
+      </form>
+    )
+  }
+
   return (
     <div
       className={cn(
@@ -259,22 +352,29 @@ function ProjectItem({
         </span>
       )}
       <span
-        className="hidden group-hover:flex"
+        className="hidden group-hover:flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="h-5 w-5 text-muted hover:text-foreground"
+          onClick={startEdit}
+        >
+          <Pencil className="h-3 w-3" />
+        </Button>
         <ConfirmDialog
           trigger={
             <Button
               variant="ghost"
               size="icon-sm"
               className="h-5 w-5 text-muted hover:text-urgent"
-              title="Delete project"
             >
               <Trash2 className="h-3 w-3" />
             </Button>
           }
-          title="Delete project?"
-          description={`"${project.name}" will be deleted. Its tasks will move to Inbox.`}
+          title={deleteLabel}
+          description={deleteDescription}
           onConfirm={onDelete}
         />
       </span>
