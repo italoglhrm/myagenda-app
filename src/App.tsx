@@ -75,7 +75,7 @@ function AppInner() {
     () => Object.fromEntries(projects.map((p) => [p.id, p])),
     [projects]
   )
-  const showProjectTag = showAll || selectedIsParent
+  const showProjectTag = showAll || (selectedIsParent && !subprojectFilter)
 
   const VIEW_TABS: { id: View; labelKey: TranslationKey; icon: React.ReactNode }[] = [
     { id: 'list',   labelKey: 'list',   icon: <List className="h-4 w-4" /> },

@@ -7,6 +7,9 @@ export interface Task {
   id: string
   name: string
   description: string | null
+  solution: string | null
+  description_images: string[] | null
+  solution_images: string[] | null
   priority: Priority
   category: Category
   status: Status

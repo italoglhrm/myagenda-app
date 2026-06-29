@@ -417,7 +417,7 @@ function ProjectItem({
         </div>
         <div className="flex gap-1.5">
           <Button type="submit" size="sm" className="flex-1 h-7 text-xs" disabled={saving || !editName.trim()}>
-            {saving ? t('creating') : t('create')}
+            {saving ? t('saving') : t('save')}
           </Button>
           <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)}>
             {t('cancel')}

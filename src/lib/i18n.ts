@@ -84,6 +84,10 @@ export const translations = {
     priorityLabel: 'Priority',
     categoryLabel: 'Category',
     statusLabel: 'Status',
+    solution: 'Solution',
+    solutionPlaceholder: 'Notes on how to solve this…',
+    attachImage: 'Attach image',
+    uploading: 'Uploading…',
     // subprojects
     newSubproject: 'New subproject',
     allSubprojects: 'All',
@@ -181,6 +185,10 @@ export const translations = {
     priorityLabel: 'Prioridade',
     categoryLabel: 'Categoria',
     statusLabel: 'Status',
+    solution: 'Solução',
+    solutionPlaceholder: 'Notas sobre como resolver isso…',
+    attachImage: 'Anexar imagem',
+    uploading: 'Enviando…',
     // subprojects
     newSubproject: 'Novo subprojeto',
     allSubprojects: 'Todos',

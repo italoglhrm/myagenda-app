@@ -66,7 +66,7 @@ export function useTasks(projectId: string | string[] | null | 'all') {
 
   async function updateTask(
     id: string,
-    changes: Partial<Pick<Task, 'name' | 'description' | 'priority' | 'category' | 'status' | 'due_date'>>
+    changes: Partial<Pick<Task, 'name' | 'description' | 'solution' | 'description_images' | 'solution_images' | 'priority' | 'category' | 'status' | 'due_date'>>
   ) {
     const { data, error } = await supabase
       .from('tasks')
