@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Inbox, Plus, Trash2, Check, PanelLeft, Pencil } from 'lucide-react'
+import { Inbox, Plus, Trash2, Check, PanelLeft, Pencil, ChevronRight } from 'lucide-react'
 import type { Project } from '../types'
 import { PROJECT_COLORS } from '../types'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -13,17 +13,19 @@ interface Props {
   selectedProjectId: string | null
   taskCounts: Record<string, number>
   onSelect: (id: string | null) => void
-  onCreate: (name: string, color: string, description?: string) => Promise<Project | null>
+  onCreate: (name: string, color: string, description?: string, parentId?: string) => Promise<Project | null>
   onDelete: (id: string) => void
   onUpdate: (id: string, changes: Partial<Pick<Project, 'name' | 'color' | 'description'>>) => Promise<void>
   onToggle: () => void
 }
 
-interface CreateFormState {
+interface ProjectFormState {
   name: string
   color: string
   description: string
 }
+
+const DEFAULT_FORM: ProjectFormState = { name: '', color: PROJECT_COLORS[0], description: '' }
 
 export function Sidebar({
   projects,
@@ -36,27 +38,44 @@ export function Sidebar({
   onToggle,
 }: Props) {
   const { t } = useLanguage()
-  const [creating, setCreating] = useState(false)
-  const [form, setForm] = useState<CreateFormState>({
-    name: '',
-    color: PROJECT_COLORS[0],
-    description: '',
-  })
+  const [creatingTop, setCreatingTop] = useState(false)
+  const [creatingSubFor, setCreatingSubFor] = useState<string | null>(null)
+  const [form, setForm] = useState<ProjectFormState>(DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
+  const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set())
 
-  async function handleCreate(e: React.FormEvent) {
+  const topLevel = projects.filter((p) => !p.parent_id)
+  const childrenOf = (parentId: string) => projects.filter((p) => p.parent_id === parentId)
+
+  function toggleExpand(id: string) {
+    setExpandedParents((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  async function handleCreateTop(e: React.FormEvent) {
     e.preventDefault()
     if (!form.name.trim()) return
     setSaving(true)
     await onCreate(form.name.trim(), form.color, form.description.trim() || undefined)
     setSaving(false)
-    setCreating(false)
-    setForm({ name: '', color: PROJECT_COLORS[0], description: '' })
+    setCreatingTop(false)
+    setForm(DEFAULT_FORM)
   }
 
-  function handleCancelCreate() {
-    setCreating(false)
-    setForm({ name: '', color: PROJECT_COLORS[0], description: '' })
+  async function handleCreateSub(e: React.FormEvent, parentId: string) {
+    e.preventDefault()
+    if (!form.name.trim()) return
+    setSaving(true)
+    const p = await onCreate(form.name.trim(), form.color, form.description.trim() || undefined, parentId)
+    setSaving(false)
+    setCreatingSubFor(null)
+    setForm(DEFAULT_FORM)
+    if (p) {
+      setExpandedParents((prev) => new Set([...prev, parentId]))
+    }
   }
 
   async function handleDelete(id: string) {
@@ -64,10 +83,16 @@ export function Sidebar({
     if (selectedProjectId === id) onSelect(null)
   }
 
+  function parentCount(parentId: string): number {
+    const own = taskCounts[parentId] ?? 0
+    const childSum = childrenOf(parentId).reduce((n, c) => n + (taskCounts[c.id] ?? 0), 0)
+    return own + childSum
+  }
+
   return (
     <aside className="flex flex-col h-full border-r border-border bg-card/40">
       <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {/* Toggle button — top right, subtle */}
+        {/* Close toggle */}
         <div className="flex justify-end mb-1">
           <Button
             variant="ghost"
@@ -79,6 +104,7 @@ export function Sidebar({
             <PanelLeft className="h-3.5 w-3.5" />
           </Button>
         </div>
+
         {/* Inbox */}
         <SidebarItem
           icon={<Inbox className="h-4 w-4" />}
@@ -88,35 +114,123 @@ export function Sidebar({
           onClick={() => onSelect(null)}
         />
 
-        {/* Projects section */}
-        {projects.length > 0 && (
+        {/* Projects */}
+        {topLevel.length > 0 && (
           <div className="pt-3 pb-1">
             <p className="px-2 text-[11px] font-semibold uppercase tracking-widest text-muted/70 mb-1">
               {t('projects')}
             </p>
             <div className="space-y-0.5">
-              {projects.map((project) => (
-                <ProjectItem
-                  key={project.id}
-                  project={project}
-                  count={taskCounts[project.id] ?? 0}
-                  selected={selectedProjectId === project.id}
-                  onClick={() => onSelect(project.id)}
-                  onDelete={() => handleDelete(project.id)}
-                  onUpdate={(changes) => onUpdate(project.id, changes)}
-                  deleteLabel={t('deleteProjectTitle')}
-                  deleteDescription={`"${project.name}" ${t('projectDeletedTasksInbox')}`}
-                />
-              ))}
+              {topLevel.map((project) => {
+                const children = childrenOf(project.id)
+                const isExpanded = expandedParents.has(project.id)
+
+                return (
+                  <div key={project.id}>
+                    <ProjectItem
+                      project={project}
+                      count={parentCount(project.id)}
+                      selected={selectedProjectId === project.id}
+                      hasChildren={children.length > 0}
+                      isExpanded={isExpanded}
+                      onToggleExpand={() => toggleExpand(project.id)}
+                      onClick={() => onSelect(project.id)}
+                      onDelete={() => handleDelete(project.id)}
+                      onUpdate={(changes) => onUpdate(project.id, changes)}
+                      onAddSub={() => {
+                        setCreatingSubFor(project.id)
+                        setCreatingTop(false)
+                        setForm(DEFAULT_FORM)
+                        setExpandedParents((prev) => new Set([...prev, project.id]))
+                      }}
+                      deleteLabel={t('deleteProjectTitle')}
+                      deleteDescription={`"${project.name}" ${t('projectDeletedTasksInbox')}`}
+                    />
+
+                    {/* Subprojects */}
+                    {isExpanded && (
+                      <div className="ml-3 pl-2 border-l border-border/60 mt-0.5 space-y-0.5">
+                        {children.map((child) => (
+                          <ProjectItem
+                            key={child.id}
+                            project={child}
+                            count={taskCounts[child.id] ?? 0}
+                            selected={selectedProjectId === child.id}
+                            hasChildren={false}
+                            isExpanded={false}
+                            onToggleExpand={() => {}}
+                            onClick={() => onSelect(child.id)}
+                            onDelete={() => handleDelete(child.id)}
+                            onUpdate={(changes) => onUpdate(child.id, changes)}
+                            onAddSub={() => {}}
+                            isSubproject
+                            deleteLabel={t('deleteProjectTitle')}
+                            deleteDescription={`"${child.name}" ${t('projectDeletedTasksInbox')}`}
+                          />
+                        ))}
+
+                        {/* Inline create subproject form */}
+                        {creatingSubFor === project.id ? (
+                          <form
+                            onSubmit={(e) => handleCreateSub(e, project.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="space-y-1.5 py-1 animate-fade-in"
+                          >
+                            <Input
+                              placeholder={t('projectName')}
+                              value={form.name}
+                              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                              autoFocus
+                              className="h-7 text-xs"
+                            />
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {PROJECT_COLORS.map((c) => (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onClick={() => setForm((f) => ({ ...f, color: c }))}
+                                  className={cn(
+                                    'w-4 h-4 rounded-full transition-all',
+                                    form.color === c ? 'ring-2 ring-offset-1 ring-offset-card scale-110' : 'hover:scale-110'
+                                  )}
+                                  style={{ backgroundColor: c }}
+                                >
+                                  {form.color === c && <Check className="h-2.5 w-2.5 text-white m-auto" strokeWidth={3} />}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button type="submit" size="sm" className="flex-1 h-6 text-xs" disabled={saving || !form.name.trim()}>
+                                {saving ? t('creating') : t('create')}
+                              </Button>
+                              <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setCreatingSubFor(null); setForm(DEFAULT_FORM) }}>
+                                {t('cancel')}
+                              </Button>
+                            </div>
+                          </form>
+                        ) : (
+                          <button
+                            onClick={() => { setCreatingSubFor(project.id); setForm(DEFAULT_FORM); setCreatingTop(false) }}
+                            className="w-full flex items-center gap-1.5 px-1.5 py-1 rounded-lg text-xs text-muted hover:text-foreground hover:bg-border/50 transition-all"
+                          >
+                            <Plus className="h-3 w-3" />
+                            {t('newSubproject')}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
       </div>
 
-      {/* Create project */}
+      {/* Create top-level project */}
       <div className="border-t border-border p-2">
-        {creating ? (
-          <form onSubmit={handleCreate} className="space-y-2 p-1 animate-fade-in">
+        {creatingTop ? (
+          <form onSubmit={handleCreateTop} className="space-y-2 p-1 animate-fade-in">
             <Input
               placeholder={t('projectName')}
               value={form.name}
@@ -134,7 +248,6 @@ export function Sidebar({
                 'focus:border-accent/60 focus:ring-[3px] focus:ring-accent/15 outline-none transition-all'
               )}
             />
-            {/* Color picker */}
             <div className="flex items-center gap-1.5 flex-wrap">
               {PROJECT_COLORS.map((c) => (
                 <button
@@ -143,41 +256,26 @@ export function Sidebar({
                   onClick={() => setForm((f) => ({ ...f, color: c }))}
                   className={cn(
                     'w-5 h-5 rounded-full transition-all',
-                    form.color === c
-                      ? 'ring-2 ring-offset-2 ring-offset-card scale-110'
-                      : 'hover:scale-110'
+                    form.color === c ? 'ring-2 ring-offset-2 ring-offset-card scale-110' : 'hover:scale-110'
                   )}
                   style={{ backgroundColor: c }}
                 >
-                  {form.color === c && (
-                    <Check className="h-3 w-3 text-white m-auto" strokeWidth={3} />
-                  )}
+                  {form.color === c && <Check className="h-3 w-3 text-white m-auto" strokeWidth={3} />}
                 </button>
               ))}
             </div>
             <div className="flex gap-1.5">
-              <Button
-                type="submit"
-                size="sm"
-                className="flex-1 h-7 text-xs"
-                disabled={saving || !form.name.trim()}
-              >
+              <Button type="submit" size="sm" className="flex-1 h-7 text-xs" disabled={saving || !form.name.trim()}>
                 {saving ? t('creating') : t('create')}
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={handleCancelCreate}
-              >
+              <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setCreatingTop(false); setForm(DEFAULT_FORM) }}>
                 {t('cancel')}
               </Button>
             </div>
           </form>
         ) : (
           <button
-            onClick={() => setCreating(true)}
+            onClick={() => { setCreatingTop(true); setCreatingSubFor(null); setForm(DEFAULT_FORM) }}
             className={cn(
               'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-muted',
               'hover:text-foreground hover:bg-border/50 transition-all'
@@ -233,18 +331,28 @@ function ProjectItem({
   project,
   count,
   selected,
+  hasChildren,
+  isExpanded,
+  isSubproject = false,
+  onToggleExpand,
   onClick,
   onDelete,
   onUpdate,
+  onAddSub,
   deleteLabel,
   deleteDescription,
 }: {
   project: Project
   count: number
   selected: boolean
+  hasChildren: boolean
+  isExpanded: boolean
+  isSubproject?: boolean
+  onToggleExpand: () => void
   onClick: () => void
   onDelete: () => void
   onUpdate: (changes: Partial<Pick<Project, 'name' | 'color' | 'description'>>) => Promise<void>
+  onAddSub: () => void
   deleteLabel: string
   deleteDescription: string
 }) {
@@ -267,22 +375,14 @@ function ProjectItem({
     e.preventDefault()
     if (!editName.trim()) return
     setSaving(true)
-    await onUpdate({
-      name: editName.trim(),
-      description: editDescription.trim() || undefined,
-      color: editColor,
-    })
+    await onUpdate({ name: editName.trim(), description: editDescription.trim() || undefined, color: editColor })
     setSaving(false)
     setEditing(false)
   }
 
   if (editing) {
     return (
-      <form
-        onSubmit={handleSave}
-        onClick={(e) => e.stopPropagation()}
-        className="space-y-2 p-1 animate-fade-in"
-      >
+      <form onSubmit={handleSave} onClick={(e) => e.stopPropagation()} className="space-y-2 p-1 animate-fade-in">
         <Input
           placeholder={t('projectName')}
           value={editName}
@@ -306,10 +406,7 @@ function ProjectItem({
               key={c}
               type="button"
               onClick={() => setEditColor(c)}
-              className={cn(
-                'w-5 h-5 rounded-full transition-all',
-                editColor === c ? 'ring-2 ring-offset-2 ring-offset-card scale-110' : 'hover:scale-110'
-              )}
+              className={cn('w-5 h-5 rounded-full transition-all', editColor === c ? 'ring-2 ring-offset-2 ring-offset-card scale-110' : 'hover:scale-110')}
               style={{ backgroundColor: c }}
             >
               {editColor === c && <Check className="h-3 w-3 text-white m-auto" strokeWidth={3} />}
@@ -331,18 +428,35 @@ function ProjectItem({
   return (
     <div
       className={cn(
-        'group flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-sm transition-all cursor-pointer',
+        'group flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm transition-all cursor-pointer',
         selected
           ? 'bg-accent-light text-accent font-medium'
-          : 'text-muted hover:text-foreground hover:bg-border/50'
+          : 'text-muted hover:text-foreground hover:bg-border/50',
+        isSubproject && 'text-[13px]'
       )}
       onClick={onClick}
     >
+      {/* Expand chevron (only for parents) */}
+      {!isSubproject && (
+        <button
+          className={cn(
+            'flex-shrink-0 transition-transform duration-150',
+            hasChildren ? 'text-current' : 'text-transparent pointer-events-none',
+            isExpanded && 'rotate-90'
+          )}
+          onClick={(e) => { e.stopPropagation(); if (hasChildren) onToggleExpand() }}
+          tabIndex={-1}
+        >
+          <ChevronRight className="h-3 w-3" />
+        </button>
+      )}
+
       <span
-        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+        className="w-2 h-2 rounded-full flex-shrink-0"
         style={{ backgroundColor: project.color }}
       />
       <span className="flex-1 text-left truncate">{project.name}</span>
+
       {count > 0 && (
         <span className={cn(
           'text-xs px-1.5 py-0.5 rounded-full tabular-nums group-hover:hidden',
@@ -351,25 +465,19 @@ function ProjectItem({
           {count}
         </span>
       )}
-      <span
-        className="hidden group-hover:flex items-center"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="h-5 w-5 text-muted hover:text-foreground"
-          onClick={startEdit}
-        >
+
+      <span className="hidden group-hover:flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+        {!isSubproject && (
+          <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-foreground" onClick={onAddSub} title={t('newSubproject')}>
+            <Plus className="h-3 w-3" />
+          </Button>
+        )}
+        <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-foreground" onClick={startEdit}>
           <Pencil className="h-3 w-3" />
         </Button>
         <ConfirmDialog
           trigger={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="h-5 w-5 text-muted hover:text-urgent"
-            >
+            <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-urgent">
               <Trash2 className="h-3 w-3" />
             </Button>
           }

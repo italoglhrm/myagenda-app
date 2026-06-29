@@ -19,6 +19,7 @@ export interface Project {
   name: string
   color: string
   description: string | null
+  parent_id: string | null
   created_at: string
 }
 

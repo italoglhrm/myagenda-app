@@ -12,10 +12,12 @@ function sortByPriority(tasks: Task[]): Task[] {
   )
 }
 
-// projectId: null = Inbox, string = specific project, 'all' = every task
-export function useTasks(projectId: string | null | 'all') {
+// projectId: null = Inbox, string = specific project, string[] = multiple projects, 'all' = every task
+export function useTasks(projectId: string | string[] | null | 'all') {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+
+  const key = Array.isArray(projectId) ? projectId.join(',') : projectId
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
@@ -23,13 +25,15 @@ export function useTasks(projectId: string | null | 'all') {
 
     if (projectId !== 'all') {
       if (projectId === null) query = query.is('project_id', null)
+      else if (Array.isArray(projectId)) query = query.in('project_id', projectId)
       else query = query.eq('project_id', projectId)
     }
 
     const { data } = await query.order('created_at', { ascending: false })
     if (data) setTasks(sortByPriority(data as Task[]))
     setLoading(false)
-  }, [projectId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
 
   useEffect(() => {
     fetchTasks()
@@ -39,7 +43,7 @@ export function useTasks(projectId: string | null | 'all') {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const insertProjectId = projectId === 'all' ? null : projectId
+    const insertProjectId = projectId === 'all' ? null : Array.isArray(projectId) ? projectId[0] : projectId
 
     const { data, error } = await supabase
       .from('tasks')

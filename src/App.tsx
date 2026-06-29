@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { LogOut, List, LayoutDashboard, CalendarDays, Loader2, PanelLeftOpen, Layers, Globe } from 'lucide-react'
 import type { View } from './types'
 import { useAuth } from './hooks/useAuth'
@@ -28,9 +28,32 @@ function AppInner() {
   const [view, setView] = useState<View>('list')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showAll, setShowAll] = useState(false)
+  const [subprojectFilter, setSubprojectFilter] = useState<string | null>(null)
 
-  const effectiveProjectId = showAll ? 'all' : selectedProjectId
-  const { tasks, loading, addTask, updateTask, deleteTask, cycleStatus } = useTasks(effectiveProjectId)
+  // Reset subproject filter when the selected project changes
+  useEffect(() => { setSubprojectFilter(null) }, [selectedProjectId])
+
+  // Children of the currently selected project (empty if not a parent or none selected)
+  const childrenOfSelected = useMemo(
+    () => selectedProjectId ? projects.filter((p) => p.parent_id === selectedProjectId) : [],
+    [projects, selectedProjectId]
+  )
+  const selectedIsParent = childrenOfSelected.length > 0
+
+  // Compute the project IDs to query — parent rolls up all children
+  const effectiveProjectId = useMemo(() => {
+    if (showAll) return 'all'
+    if (selectedIsParent) return [selectedProjectId!, ...childrenOfSelected.map((p) => p.id)]
+    return selectedProjectId
+  }, [showAll, selectedIsParent, selectedProjectId, childrenOfSelected])
+
+  const { tasks: allTasks, loading, addTask, updateTask, deleteTask, cycleStatus } = useTasks(effectiveProjectId)
+
+  // Apply optional client-side subproject filter
+  const tasks = useMemo(
+    () => subprojectFilter ? allTasks.filter((t) => t.project_id === subprojectFilter) : allTasks,
+    [allTasks, subprojectFilter]
+  )
 
   const taskCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -175,18 +198,45 @@ function AppInner() {
           <AddTaskBar onAdd={addTask} />
 
           <main className="flex-1 overflow-y-auto px-6 py-4">
-            {/* All-projects toggle */}
-            <div className="flex items-center justify-end mb-4">
-              <button
-                onClick={() => setShowAll((v) => !v)}
-                className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
-                  showAll ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
-                )}
-              >
-                <Layers className="h-3 w-3" />
-                {t('allProjects')}
-              </button>
+            {/* Top bar: subproject filter chips OR all-projects toggle */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              {selectedIsParent && !showAll ? (
+                <>
+                  <button
+                    onClick={() => setSubprojectFilter(null)}
+                    className={cn(
+                      'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                      subprojectFilter === null ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
+                    )}
+                  >
+                    {t('allSubprojects')}
+                  </button>
+                  {childrenOfSelected.map((child) => (
+                    <button
+                      key={child.id}
+                      onClick={() => setSubprojectFilter(child.id)}
+                      className={cn(
+                        'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                        subprojectFilter === child.id ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
+                      )}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: child.color }} />
+                      {child.name}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAll((v) => !v)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                    showAll ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
+                  )}
+                >
+                  <Layers className="h-3 w-3" />
+                  {t('allProjects')}
+                </button>
+              )}
             </div>
 
             {loading ? (

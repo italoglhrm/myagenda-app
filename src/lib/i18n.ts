@@ -74,6 +74,9 @@ export const translations = {
     checkEmail: 'Check your email',
     magicLinkSentTo: "We've sent a login link to",
     clickLinkToSignIn: 'Click the link in the email to sign in.',
+    // subprojects
+    newSubproject: 'New subproject',
+    allSubprojects: 'All',
     // list view empty states
     allClear: 'All clear!',
     addTaskToGetStarted: 'Add a task above to get started.',
@@ -158,6 +161,9 @@ export const translations = {
     checkEmail: 'Verifique seu e-mail',
     magicLinkSentTo: 'Enviamos um link de acesso para',
     clickLinkToSignIn: 'Clique no link do e-mail para entrar.',
+    // subprojects
+    newSubproject: 'Novo subprojeto',
+    allSubprojects: 'Todos',
     // list view empty states
     allClear: 'Tudo limpo!',
     addTaskToGetStarted: 'Adicione uma tarefa acima para começar.',

@@ -20,14 +20,15 @@ export function useProjects() {
   async function createProject(
     name: string,
     color: string,
-    description?: string
+    description?: string,
+    parentId?: string
   ): Promise<Project | null> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
     const { data, error } = await supabase
       .from('projects')
-      .insert({ name, color, description: description || null, user_id: user.id })
+      .insert({ name, color, description: description || null, user_id: user.id, parent_id: parentId ?? null })
       .select()
       .single()
 
