@@ -19,6 +19,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { ConfirmDialog } from './ui/confirm-dialog'
+import { Tooltip } from './ui/tooltip'
 import { cn } from '../lib/utils'
 
 interface Props {
@@ -67,13 +68,15 @@ function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang }: {
         <span onClick={(e) => e.stopPropagation()}>
           <ConfirmDialog
             trigger={
-              <Button
-                variant="destructive"
-                size="icon-sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mt-0.5 -mr-0.5"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+              <Tooltip label={t('delete')}>
+                <Button
+                  variant="destructive"
+                  size="icon-sm"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mt-0.5 -mr-0.5"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </Tooltip>
             }
             title={t('deleteTaskTitle')}
             description={`"${task.name}" ${t('permanentlyRemoved')}`}
@@ -109,14 +112,15 @@ function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang }: {
         {/* Cycle button — hidden on done cards */}
         {!isDone && (
           <span onClick={(e) => { e.stopPropagation(); onCycle() }}>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              title={t('moveToNextStage')}
-              className="flex-shrink-0 text-muted hover:text-accent"
-            >
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+            <Tooltip label={t('moveToNextStage')}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="flex-shrink-0 text-muted hover:text-accent"
+              >
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Tooltip>
           </span>
         )}
         {isDone && (

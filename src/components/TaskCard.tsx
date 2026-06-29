@@ -1,4 +1,5 @@
 import { Trash2, CalendarDays } from 'lucide-react'
+import { Tooltip } from './ui/tooltip'
 import type { Task } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
@@ -70,14 +71,15 @@ export function TaskCard({ task, onToggleDone, onDelete, className }: Props) {
 
         <ConfirmDialog
           trigger={
-            <Button
-              variant="destructive"
-              size="icon-sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              title={t('deleteTaskTitle')}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            <Tooltip label={t('delete')}>
+              <Button
+                variant="destructive"
+                size="icon-sm"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </Tooltip>
           }
           title={t('deleteTaskTitle')}
           description={`"${task.name}" ${t('permanentlyRemoved')}`}

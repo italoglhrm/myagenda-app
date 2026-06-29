@@ -6,6 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { ConfirmDialog } from './ui/confirm-dialog'
+import { Tooltip } from './ui/tooltip'
 import { cn } from '../lib/utils'
 
 interface Props {
@@ -94,15 +95,16 @@ export function Sidebar({
       <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {/* Close toggle */}
         <div className="flex justify-end mb-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggle}
-            className="h-6 w-6 text-muted hover:text-foreground"
-            title={t('closeSidebar')}
-          >
-            <PanelLeft className="h-3.5 w-3.5" />
-          </Button>
+          <Tooltip label={t('closeSidebar')} side="right">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="h-6 w-6 text-muted hover:text-foreground"
+            >
+              <PanelLeft className="h-3.5 w-3.5" />
+            </Button>
+          </Tooltip>
         </div>
 
         {/* Inbox */}
@@ -468,18 +470,24 @@ function ProjectItem({
 
       <span className="hidden group-hover:flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
         {!isSubproject && (
-          <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-foreground" onClick={onAddSub} title={t('newSubproject')}>
-            <Plus className="h-3 w-3" />
-          </Button>
+          <Tooltip label={t('newSubproject')} side="top">
+            <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-foreground" onClick={onAddSub}>
+              <Plus className="h-3 w-3" />
+            </Button>
+          </Tooltip>
         )}
-        <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-foreground" onClick={startEdit}>
-          <Pencil className="h-3 w-3" />
-        </Button>
+        <Tooltip label={t('edit')} side="top">
+          <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-foreground" onClick={startEdit}>
+            <Pencil className="h-3 w-3" />
+          </Button>
+        </Tooltip>
         <ConfirmDialog
           trigger={
-            <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-urgent">
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            <Tooltip label={t('delete')} side="top">
+              <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-muted hover:text-urgent">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </Tooltip>
           }
           title={deleteLabel}
           description={deleteDescription}

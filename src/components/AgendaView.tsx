@@ -7,6 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { ConfirmDialog } from './ui/confirm-dialog'
+import { Tooltip } from './ui/tooltip'
 import { cn } from '../lib/utils'
 
 interface Props {
@@ -188,9 +189,11 @@ export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
                       </Button>
                       <ConfirmDialog
                         trigger={
-                          <Button variant="destructive" size="icon-sm">
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          <Tooltip label={t('delete')}>
+                            <Button variant="destructive" size="icon-sm">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </Tooltip>
                         }
                         title={t('deleteTaskTitle')}
                         description={`"${task.name}" ${t('permanentlyRemoved')}`}

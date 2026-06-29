@@ -59,6 +59,7 @@ export const translations = {
     deleteProjectTitle: 'Delete project?',
     permanentlyRemoved: 'will be permanently removed.',
     projectDeletedTasksInbox: 'will be deleted. Its tasks will move to Inbox.',
+    edit: 'Edit',
     delete: 'Delete',
     deleting: 'Deleting…',
     // date picker
@@ -146,6 +147,7 @@ export const translations = {
     deleteProjectTitle: 'Excluir projeto?',
     permanentlyRemoved: 'será removida permanentemente.',
     projectDeletedTasksInbox: 'será excluído. As tarefas irão para a Caixa de entrada.',
+    edit: 'Editar',
     delete: 'Excluir',
     deleting: 'Excluindo…',
     // date picker

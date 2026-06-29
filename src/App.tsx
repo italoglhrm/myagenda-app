@@ -16,6 +16,7 @@ import { Sidebar } from './components/Sidebar'
 import { ThemeToggle } from './components/ThemeToggle'
 import { LogoIcon } from './components/LogoIcon'
 import { Button } from './components/ui/button'
+import { Tooltip, TooltipProvider } from './components/ui/tooltip'
 import { cn } from './lib/utils'
 
 function AppInner() {
@@ -142,16 +143,17 @@ function AppInner() {
         {/* Right actions */}
         <div className="flex items-center gap-1 ml-auto flex-shrink-0">
           {/* Language toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleLang}
-            className="gap-1.5 text-muted hover:text-foreground font-medium tabular-nums"
-            title={lang === 'en' ? 'Switch to Portuguese' : 'Mudar para Inglês'}
-          >
-            <Globe className="h-3.5 w-3.5" />
-            <span className="text-xs">{lang === 'en' ? 'PT' : 'EN'}</span>
-          </Button>
+          <Tooltip label={lang === 'en' ? 'Switch to Portuguese' : 'Mudar para Inglês'}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleLang}
+              className="gap-1.5 text-muted hover:text-foreground font-medium tabular-nums"
+            >
+              <Globe className="h-3.5 w-3.5" />
+              <span className="text-xs">{lang === 'en' ? 'PT' : 'EN'}</span>
+            </Button>
+          </Tooltip>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
           <Button variant="ghost" size="sm" onClick={logout} className="gap-1.5">
             <LogOut className="h-3.5 w-3.5" />
@@ -181,15 +183,16 @@ function AppInner() {
         {/* Collapsed sidebar re-open button */}
         <div className={cn('flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out', sidebarOpen ? 'w-0' : 'w-10')}>
           <div className="w-10 h-full flex items-start pt-2 justify-center border-r border-border">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(true)}
-              className="text-muted hover:text-foreground"
-              title={t('openSidebar')}
-            >
-              <PanelLeftOpen className="h-4 w-4" />
-            </Button>
+            <Tooltip label={t('openSidebar')} side="right">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+                className="text-muted hover:text-foreground"
+              >
+                <PanelLeftOpen className="h-4 w-4" />
+              </Button>
+            </Tooltip>
           </div>
         </div>
 
@@ -275,7 +278,9 @@ function AppInner() {
 export default function App() {
   return (
     <LanguageProvider>
-      <AppInner />
+      <TooltipProvider>
+        <AppInner />
+      </TooltipProvider>
     </LanguageProvider>
   )
 }
