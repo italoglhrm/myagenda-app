@@ -1,6 +1,6 @@
 import { Trash2, CalendarDays } from 'lucide-react'
 import { Tooltip } from './ui/tooltip'
-import type { Task } from '../types'
+import type { Task, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
 import { dueDateLabel, isOverdue } from '../lib/date'
@@ -15,10 +15,11 @@ interface Props {
   task: Task
   onToggleDone: (task: Task) => void
   onDelete: (id: string) => void
+  project?: Project
   className?: string
 }
 
-export function TaskCard({ task, onToggleDone, onDelete, className }: Props) {
+export function TaskCard({ task, onToggleDone, onDelete, project, className }: Props) {
   const { lang, t } = useLanguage()
   const isDone = task.status === 'done'
   const colors = PRIORITY_COLORS[task.priority]
@@ -42,6 +43,13 @@ export function TaskCard({ task, onToggleDone, onDelete, className }: Props) {
       </span>
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
+        {project && (
+          <Badge variant="muted" className="hidden sm:flex items-center gap-1 max-w-[96px]">
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />
+            <span className="truncate">{project.name}</span>
+          </Badge>
+        )}
+
         <Badge variant={task.priority as any} className="hidden sm:flex">
           <span className={cn('priority-dot', colors.dot)} />
           {t(task.priority)}

@@ -1,5 +1,5 @@
 import { CalendarDays, CheckCircle2, Inbox, Trash2 } from 'lucide-react'
-import type { Task } from '../types'
+import type { Task, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
 import { parseDateLocal, isOverdue } from '../lib/date'
@@ -14,6 +14,7 @@ interface Props {
   tasks: Task[]
   onMarkDone: (task: Task) => void
   onDelete: (id: string) => void
+  projectMap?: Record<string, Project>
 }
 
 interface Group {
@@ -93,7 +94,7 @@ const GROUP_STYLES: Record<Group['variant'], { header: string; dot: string }> = 
   undated:  { header: 'text-muted',     dot: 'bg-border' },
 }
 
-export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
+export function AgendaView({ tasks, onMarkDone, onDelete, projectMap }: Props) {
   const { lang, t } = useLanguage()
   const groups = buildGroups(tasks, lang, {
     overdue: t('overdue'),
@@ -162,6 +163,12 @@ export function AgendaView({ tasks, onMarkDone, onDelete }: Props) {
                     <p className="flex-1 min-w-0 text-sm font-medium truncate">{task.name}</p>
 
                     <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                      {task.project_id && projectMap?.[task.project_id] && (
+                        <Badge variant="muted" className="text-[11px] items-center gap-1 max-w-[96px]">
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: projectMap[task.project_id].color }} />
+                          <span className="truncate">{projectMap[task.project_id].name}</span>
+                        </Badge>
+                      )}
                       <Badge variant={task.priority as any} className="text-[11px]">
                         {t(task.priority)}
                       </Badge>

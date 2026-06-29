@@ -68,6 +68,13 @@ function AppInner() {
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null
 
+  // Build a lookup map; pass it to views when tasks from multiple projects are shown
+  const projectMap = useMemo(
+    () => Object.fromEntries(projects.map((p) => [p.id, p])),
+    [projects]
+  )
+  const showProjectTag = showAll || selectedIsParent
+
   const VIEW_TABS: { id: View; labelKey: TranslationKey; icon: React.ReactNode }[] = [
     { id: 'list',   labelKey: 'list',   icon: <List className="h-4 w-4" /> },
     { id: 'kanban', labelKey: 'board',  icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -249,7 +256,12 @@ function AppInner() {
             ) : (
               <>
                 {view === 'list' && (
-                  <ListView tasks={tasks} onToggleDone={handleToggleDone} onDelete={deleteTask} />
+                  <ListView
+                    tasks={tasks}
+                    onToggleDone={handleToggleDone}
+                    onDelete={deleteTask}
+                    projectMap={showProjectTag ? projectMap : undefined}
+                  />
                 )}
                 {view === 'kanban' && (
                   <KanbanView
@@ -257,6 +269,7 @@ function AppInner() {
                     onCycle={cycleStatus}
                     onDelete={deleteTask}
                     onMove={(id, status) => updateTask(id, { status })}
+                    projectMap={showProjectTag ? projectMap : undefined}
                   />
                 )}
                 {view === 'agenda' && (
@@ -264,6 +277,7 @@ function AppInner() {
                     tasks={tasks}
                     onMarkDone={(task) => updateTask(task.id, { status: 'done' })}
                     onDelete={deleteTask}
+                    projectMap={showProjectTag ? projectMap : undefined}
                   />
                 )}
               </>

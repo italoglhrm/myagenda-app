@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { ArrowRight, Check, Trash2, CalendarDays } from 'lucide-react'
-import type { Task, Status, Priority } from '../types'
+import type { Task, Status, Priority, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
 import { dueDateLabel, isOverdue } from '../lib/date'
@@ -27,6 +27,7 @@ interface Props {
   onCycle: (task: Task) => void
   onDelete: (id: string) => void
   onMove: (id: string, status: Status) => void
+  projectMap?: Record<string, Project>
 }
 
 const COLUMN_META: { status: Status; color: string; bg: string }[] = [
@@ -40,13 +41,14 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 }
 
 // ── Card (pure UI, no drag wiring) ────────────────────────────────────────────
-function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang }: {
+function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang, project }: {
   task: Task
   onCycle: () => void
   onDelete: () => void
   dimmed?: boolean
   t: (key: any) => string
   lang: 'en' | 'pt'
+  project?: Project
 }) {
   const colors = PRIORITY_COLORS[task.priority]
   const isDone = task.status === 'done'
@@ -87,6 +89,12 @@ function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang }: {
 
       <div className="flex items-center justify-between gap-1">
         <div className="flex items-center gap-1 flex-wrap">
+          {project && (
+            <Badge variant="muted" className="text-[11px] items-center gap-1 max-w-[96px]">
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />
+              <span className="truncate">{project.name}</span>
+            </Badge>
+          )}
           <Badge variant={task.priority as any} className="text-[11px]">
             <span className={cn('w-1.5 h-1.5 rounded-full', colors.dot)} />
             {t(task.priority)}
@@ -132,12 +140,13 @@ function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang }: {
 }
 
 // ── Draggable card ─────────────────────────────────────────────────────────────
-function DraggableCard({ task, onCycle, onDelete, t, lang }: {
+function DraggableCard({ task, onCycle, onDelete, t, lang, project }: {
   task: Task
   onCycle: () => void
   onDelete: () => void
   t: (key: any) => string
   lang: 'en' | 'pt'
+  project?: Project
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
 
@@ -153,13 +162,13 @@ function DraggableCard({ task, onCycle, onDelete, t, lang }: {
       {...attributes}
       {...listeners}
     >
-      <CardContent task={task} onCycle={onCycle} onDelete={onDelete} t={t} lang={lang} />
+      <CardContent task={task} onCycle={onCycle} onDelete={onDelete} t={t} lang={lang} project={project} />
     </div>
   )
 }
 
 // ── Droppable column ───────────────────────────────────────────────────────────
-function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t, lang }: {
+function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t, lang, projectMap }: {
   status: Status
   label: string
   color: string
@@ -169,6 +178,7 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t
   onDelete: (id: string) => void
   t: (key: any) => string
   lang: 'en' | 'pt'
+  projectMap?: Record<string, Project>
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
@@ -201,6 +211,7 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t
               onDelete={() => onDelete(task.id)}
               t={t}
               lang={lang}
+              project={task.project_id && projectMap ? projectMap[task.project_id] : undefined}
             />
           ))
         )}
@@ -210,7 +221,7 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t
 }
 
 // ── Main view ─────────────────────────────────────────────────────────────────
-export function KanbanView({ tasks, onCycle, onDelete, onMove }: Props) {
+export function KanbanView({ tasks, onCycle, onDelete, onMove, projectMap }: Props) {
   const { lang, t } = useLanguage()
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const COLUMNS = COLUMN_META.map((c) => ({ ...c, label: t(c.status) }))
@@ -250,6 +261,7 @@ export function KanbanView({ tasks, onCycle, onDelete, onMove }: Props) {
             onDelete={onDelete}
             t={t}
             lang={lang}
+            projectMap={projectMap}
           />
         ))}
       </div>
@@ -263,6 +275,7 @@ export function KanbanView({ tasks, onCycle, onDelete, onMove }: Props) {
               onDelete={() => {}}
               t={t}
               lang={lang}
+              project={activeTask.project_id && projectMap ? projectMap[activeTask.project_id] : undefined}
             />
           </div>
         )}

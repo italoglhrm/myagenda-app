@@ -1,5 +1,5 @@
 import { Inbox } from 'lucide-react'
-import type { Task, Priority } from '../types'
+import type { Task, Priority, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { useLanguage } from '../contexts/LanguageContext'
 import { TaskCard } from './TaskCard'
@@ -9,11 +9,12 @@ interface Props {
   tasks: Task[]
   onToggleDone: (task: Task) => void
   onDelete: (id: string) => void
+  projectMap?: Record<string, Project>
 }
 
 const PRIORITY_ORDER: Priority[] = ['urgent', 'high', 'normal', 'low']
 
-export function ListView({ tasks, onToggleDone, onDelete }: Props) {
+export function ListView({ tasks, onToggleDone, onDelete, projectMap }: Props) {
   const { t } = useLanguage()
 
   const PRIORITY_EMPTY: Record<Priority, string> = {
@@ -76,6 +77,7 @@ export function ListView({ tasks, onToggleDone, onDelete }: Props) {
                     task={task}
                     onToggleDone={onToggleDone}
                     onDelete={onDelete}
+                    project={task.project_id && projectMap ? projectMap[task.project_id] : undefined}
                   />
                 ))}
               </div>
