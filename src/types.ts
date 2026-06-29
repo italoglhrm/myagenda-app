@@ -6,6 +6,7 @@ export type View = 'list' | 'kanban' | 'agenda'
 export interface Task {
   id: string
   name: string
+  description: string | null
   priority: Priority
   category: Category
   status: Status

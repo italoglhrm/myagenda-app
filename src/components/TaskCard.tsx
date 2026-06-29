@@ -15,11 +15,12 @@ interface Props {
   task: Task
   onToggleDone: (task: Task) => void
   onDelete: (id: string) => void
+  onOpen?: () => void
   project?: Project
   className?: string
 }
 
-export function TaskCard({ task, onToggleDone, onDelete, project, className }: Props) {
+export function TaskCard({ task, onToggleDone, onDelete, onOpen, project, className }: Props) {
   const { lang, t } = useLanguage()
   const isDone = task.status === 'done'
   const colors = PRIORITY_COLORS[task.priority]
@@ -38,7 +39,10 @@ export function TaskCard({ task, onToggleDone, onDelete, project, className }: P
     >
       <Checkbox checked={isDone} onChange={() => onToggleDone(task)} />
 
-      <span className={cn('flex-1 min-w-0 text-sm truncate', isDone && 'line-through text-muted')}>
+      <span
+        className={cn('flex-1 min-w-0 text-sm truncate', isDone && 'line-through text-muted', onOpen && 'cursor-pointer hover:text-accent transition-colors')}
+        onClick={onOpen}
+      >
         {task.name}
       </span>
 

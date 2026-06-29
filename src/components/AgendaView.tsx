@@ -14,6 +14,7 @@ interface Props {
   tasks: Task[]
   onMarkDone: (task: Task) => void
   onDelete: (id: string) => void
+  onOpenTask: (task: Task) => void
   projectMap?: Record<string, Project>
 }
 
@@ -94,7 +95,7 @@ const GROUP_STYLES: Record<Group['variant'], { header: string; dot: string }> = 
   undated:  { header: 'text-muted',     dot: 'bg-border' },
 }
 
-export function AgendaView({ tasks, onMarkDone, onDelete, projectMap }: Props) {
+export function AgendaView({ tasks, onMarkDone, onDelete, onOpenTask, projectMap }: Props) {
   const { lang, t } = useLanguage()
   const groups = buildGroups(tasks, lang, {
     overdue: t('overdue'),
@@ -160,7 +161,10 @@ export function AgendaView({ tasks, onMarkDone, onDelete, projectMap }: Props) {
                   >
                     <span className={cn('w-2 h-2 rounded-full flex-shrink-0', colors.dot)} />
 
-                    <p className="flex-1 min-w-0 text-sm font-medium truncate">{task.name}</p>
+                    <p
+                      className="flex-1 min-w-0 text-sm font-medium truncate cursor-pointer hover:text-accent transition-colors"
+                      onClick={() => onOpenTask(task)}
+                    >{task.name}</p>
 
                     <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
                       {task.project_id && projectMap?.[task.project_id] && (

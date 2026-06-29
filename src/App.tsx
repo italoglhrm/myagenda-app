@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { LogOut, List, LayoutDashboard, CalendarDays, Loader2, PanelLeftOpen, Layers, Globe } from 'lucide-react'
-import type { View } from './types'
+import type { View, Task } from './types'
 import { useAuth } from './hooks/useAuth'
 import { useTasks } from './hooks/useTasks'
 import { useProjects } from './hooks/useProjects'
@@ -17,6 +17,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 import { LogoIcon } from './components/LogoIcon'
 import { Button } from './components/ui/button'
 import { Tooltip, TooltipProvider } from './components/ui/tooltip'
+import { TaskModal } from './components/TaskModal'
 import { cn } from './lib/utils'
 
 function AppInner() {
@@ -30,6 +31,7 @@ function AppInner() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [subprojectFilter, setSubprojectFilter] = useState<string | null>(null)
+  const [openTask, setOpenTask] = useState<Task | null>(null)
 
   // Reset subproject filter when the selected project changes
   useEffect(() => { setSubprojectFilter(null) }, [selectedProjectId])
@@ -260,6 +262,7 @@ function AppInner() {
                     tasks={tasks}
                     onToggleDone={handleToggleDone}
                     onDelete={deleteTask}
+                    onOpenTask={setOpenTask}
                     projectMap={showProjectTag ? projectMap : undefined}
                   />
                 )}
@@ -269,6 +272,7 @@ function AppInner() {
                     onCycle={cycleStatus}
                     onDelete={deleteTask}
                     onMove={(id, status) => updateTask(id, { status })}
+                    onOpenTask={setOpenTask}
                     projectMap={showProjectTag ? projectMap : undefined}
                   />
                 )}
@@ -277,6 +281,7 @@ function AppInner() {
                     tasks={tasks}
                     onMarkDone={(task) => updateTask(task.id, { status: 'done' })}
                     onDelete={deleteTask}
+                    onOpenTask={setOpenTask}
                     projectMap={showProjectTag ? projectMap : undefined}
                   />
                 )}
@@ -285,6 +290,17 @@ function AppInner() {
           </main>
         </div>
       </div>
+
+      <TaskModal
+        task={openTask}
+        project={openTask?.project_id ? projectMap[openTask.project_id] : undefined}
+        onClose={() => setOpenTask(null)}
+        onSave={async (id, changes) => {
+          await updateTask(id, changes)
+          setOpenTask((t) => t && t.id === id ? { ...t, ...changes } as Task : t)
+        }}
+        onDelete={(id) => { deleteTask(id); setOpenTask(null) }}
+      />
     </div>
   )
 }

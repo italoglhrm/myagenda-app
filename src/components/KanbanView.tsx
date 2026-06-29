@@ -27,6 +27,7 @@ interface Props {
   onCycle: (task: Task) => void
   onDelete: (id: string) => void
   onMove: (id: string, status: Status) => void
+  onOpenTask: (task: Task) => void
   projectMap?: Record<string, Project>
 }
 
@@ -41,10 +42,11 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 }
 
 // ── Card (pure UI, no drag wiring) ────────────────────────────────────────────
-function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang, project }: {
+function CardContent({ task, onCycle, onDelete, onOpen, dimmed = false, t, lang, project }: {
   task: Task
   onCycle: () => void
   onDelete: () => void
+  onOpen?: () => void
   dimmed?: boolean
   t: (key: any) => string
   lang: 'en' | 'pt'
@@ -64,7 +66,10 @@ function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang, project
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-2.5">
-        <p className={cn('text-sm font-medium leading-snug flex-1 min-w-0', isDone && 'line-through text-muted')}>
+        <p
+          className={cn('text-sm font-medium leading-snug flex-1 min-w-0', isDone && 'line-through text-muted', onOpen && 'cursor-pointer hover:text-accent transition-colors')}
+          onClick={onOpen}
+        >
           {task.name}
         </p>
         <span onClick={(e) => e.stopPropagation()}>
@@ -140,10 +145,11 @@ function CardContent({ task, onCycle, onDelete, dimmed = false, t, lang, project
 }
 
 // ── Draggable card ─────────────────────────────────────────────────────────────
-function DraggableCard({ task, onCycle, onDelete, t, lang, project }: {
+function DraggableCard({ task, onCycle, onDelete, onOpen, t, lang, project }: {
   task: Task
   onCycle: () => void
   onDelete: () => void
+  onOpen: () => void
   t: (key: any) => string
   lang: 'en' | 'pt'
   project?: Project
@@ -162,13 +168,13 @@ function DraggableCard({ task, onCycle, onDelete, t, lang, project }: {
       {...attributes}
       {...listeners}
     >
-      <CardContent task={task} onCycle={onCycle} onDelete={onDelete} t={t} lang={lang} project={project} />
+      <CardContent task={task} onCycle={onCycle} onDelete={onDelete} onOpen={onOpen} t={t} lang={lang} project={project} />
     </div>
   )
 }
 
 // ── Droppable column ───────────────────────────────────────────────────────────
-function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t, lang, projectMap }: {
+function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, onOpenTask, t, lang, projectMap }: {
   status: Status
   label: string
   color: string
@@ -176,6 +182,7 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t
   tasks: Task[]
   onCycle: (task: Task) => void
   onDelete: (id: string) => void
+  onOpenTask: (task: Task) => void
   t: (key: any) => string
   lang: 'en' | 'pt'
   projectMap?: Record<string, Project>
@@ -209,6 +216,7 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t
               task={task}
               onCycle={() => onCycle(task)}
               onDelete={() => onDelete(task.id)}
+              onOpen={() => onOpenTask(task)}
               t={t}
               lang={lang}
               project={task.project_id && projectMap ? projectMap[task.project_id] : undefined}
@@ -221,7 +229,7 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, t
 }
 
 // ── Main view ─────────────────────────────────────────────────────────────────
-export function KanbanView({ tasks, onCycle, onDelete, onMove, projectMap }: Props) {
+export function KanbanView({ tasks, onCycle, onDelete, onMove, onOpenTask, projectMap }: Props) {
   const { lang, t } = useLanguage()
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const COLUMNS = COLUMN_META.map((c) => ({ ...c, label: t(c.status) }))
@@ -261,6 +269,7 @@ export function KanbanView({ tasks, onCycle, onDelete, onMove, projectMap }: Pro
             onDelete={onDelete}
             t={t}
             lang={lang}
+            onOpenTask={onOpenTask}
             projectMap={projectMap}
           />
         ))}

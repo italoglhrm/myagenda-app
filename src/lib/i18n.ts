@@ -75,6 +75,15 @@ export const translations = {
     checkEmail: 'Check your email',
     magicLinkSentTo: "We've sent a login link to",
     clickLinkToSignIn: 'Click the link in the email to sign in.',
+    // task modal
+    taskDescription: 'Description',
+    descriptionPlaceholder: 'Add a description…',
+    save: 'Save',
+    saving: 'Saving…',
+    noDescription: 'No description yet.',
+    priorityLabel: 'Priority',
+    categoryLabel: 'Category',
+    statusLabel: 'Status',
     // subprojects
     newSubproject: 'New subproject',
     allSubprojects: 'All',
@@ -163,6 +172,15 @@ export const translations = {
     checkEmail: 'Verifique seu e-mail',
     magicLinkSentTo: 'Enviamos um link de acesso para',
     clickLinkToSignIn: 'Clique no link do e-mail para entrar.',
+    // task modal
+    taskDescription: 'Descrição',
+    descriptionPlaceholder: 'Adicionar uma descrição…',
+    save: 'Salvar',
+    saving: 'Salvando…',
+    noDescription: 'Sem descrição ainda.',
+    priorityLabel: 'Prioridade',
+    categoryLabel: 'Categoria',
+    statusLabel: 'Status',
     // subprojects
     newSubproject: 'Novo subprojeto',
     allSubprojects: 'Todos',
