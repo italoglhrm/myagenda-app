@@ -230,7 +230,7 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
         <Dialog.Content
           className={cn(
             'fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
-            'w-full max-w-lg bg-card border border-border rounded-xl shadow-card-hover',
+            'w-full max-w-2xl bg-card border border-border rounded-xl shadow-card-hover',
             'data-[state=open]:animate-dialog-in outline-none',
             'flex flex-col max-h-[90vh]'
           )}
