@@ -113,22 +113,6 @@ After deploying, go back to Supabase → **Authentication → URL Configuration*
 
 Every `git push` to `main` will trigger an automatic redeploy.
 
----
-
-### Migrations (existing database)
-
-If you ran an older version of `supabase-setup.sql`, run these in the SQL Editor to add the new columns:
-
-```sql
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS solution TEXT;
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description_images TEXT[] DEFAULT '{}';
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS solution_images TEXT[] DEFAULT '{}';
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date DATE;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES projects(id) ON DELETE CASCADE;
-```
-
-Then create the `task-images` storage bucket as described in step 2.3.
 
 ---
 
@@ -241,19 +225,3 @@ Após o deploy, volte ao Supabase → **Authentication → URL Configuration** e
 
 A cada `git push` para a branch `main`, o Vercel fará o redeploy automaticamente.
 
----
-
-### Migrações (banco de dados existente)
-
-Se você já rodou uma versão anterior do `supabase-setup.sql`, execute os comandos abaixo no SQL Editor para adicionar as novas colunas:
-
-```sql
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS solution TEXT;
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description_images TEXT[] DEFAULT '{}';
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS solution_images TEXT[] DEFAULT '{}';
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date DATE;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES projects(id) ON DELETE CASCADE;
-```
-
-Em seguida, crie o bucket `task-images` no Storage conforme descrito no passo 2.3.
