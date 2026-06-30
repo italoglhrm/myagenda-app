@@ -1,12 +1,25 @@
 # MyAgenda
 
-A personal task manager built for focus and clarity. Organize tasks across projects, track due dates, and switch between List, Board, and Agenda views.
+A personal task manager built for focus and clarity. Organize tasks across projects and subprojects, track due dates, add descriptions and solution notes, and switch between List, Board, and Agenda views.
 
 **Stack:** React 19 · TypeScript · Vite · Tailwind CSS · Supabase · Radix UI
 
 ---
 
 ## English
+
+### Features
+
+- **Magic Link auth** — passwordless sign-in via email
+- **Projects & subprojects** — one level of nesting; parent projects roll up tasks from all children
+- **Three views** — List (grouped by priority), Board (Kanban), Agenda (grouped by due date)
+- **Task detail modal** — edit title, description, solution notes, priority, category, status, and due date
+- **Image attachments** — attach images to description and solution fields (stored in Supabase Storage)
+- **Drag-and-drop** — reorder tasks between Kanban columns
+- **Dark / light theme**
+- **English / Portuguese UI**
+
+---
 
 ### Prerequisites
 
@@ -33,19 +46,30 @@ cd myagenda-app
 
 #### 2.2 Run the database schema
 1. In the Supabase dashboard, go to **SQL Editor**
-2. Open the file `supabase-setup.sql` from this repo
+2. Open `supabase-setup.sql` from this repo
 3. Paste the contents and click **Run**
 
 This creates the `tasks` and `projects` tables with Row Level Security enabled.
 
-#### 2.3 Enable Magic Link auth
+#### 2.3 Create the storage bucket for task images
+1. In the Supabase dashboard, go to **Storage → New bucket**
+2. Name it `task-images` and enable **Public**
+3. Go to **Storage → task-images → Policies** and add three policies:
+
+| Operation | Policy |
+|-----------|--------|
+| INSERT | `auth.role() = 'authenticated'` |
+| SELECT | *(no restriction — public)* |
+| DELETE | `auth.uid()::text = (storage.foldername(name))[1]` |
+
+#### 2.4 Enable Magic Link auth
 1. Go to **Authentication → Providers**
 2. Make sure **Email** is enabled
 3. Go to **Authentication → URL Configuration**
 4. Add your local URL to **Redirect URLs**: `http://localhost:5173`
    - For production, also add your Vercel URL: `https://your-app.vercel.app`
 
-#### 2.4 Get your API keys
+#### 2.5 Get your API keys
 1. Go to **Project Settings → API**
 2. Copy the **Project URL** and the **anon / public** key
 
@@ -91,9 +115,39 @@ Every `git push` to `main` will trigger an automatic redeploy.
 
 ---
 
+### Migrations (existing database)
+
+If you ran an older version of `supabase-setup.sql`, run these in the SQL Editor to add the new columns:
+
+```sql
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS solution TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description_images TEXT[] DEFAULT '{}';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS solution_images TEXT[] DEFAULT '{}';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date DATE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES projects(id) ON DELETE CASCADE;
+```
+
+Then create the `task-images` storage bucket as described in step 2.3.
+
+---
+
 ---
 
 ## Português
+
+### Funcionalidades
+
+- **Login por Magic Link** — autenticação sem senha via e-mail
+- **Projetos e subprojetos** — um nível de aninhamento; projetos pai agregam tarefas de todos os filhos
+- **Três visualizações** — Lista (agrupada por prioridade), Quadro (Kanban), Agenda (agrupada por prazo)
+- **Modal de detalhes da tarefa** — edite título, descrição, notas de solução, prioridade, categoria, status e prazo
+- **Anexos de imagem** — adicione imagens à descrição e ao campo de solução (armazenadas no Supabase Storage)
+- **Arrastar e soltar** — reorganize tarefas entre colunas do Kanban
+- **Tema escuro / claro**
+- **Interface em Inglês / Português**
+
+---
 
 ### Pré-requisitos
 
@@ -125,14 +179,25 @@ cd myagenda-app
 
 Isso cria as tabelas `tasks` e `projects` com Row Level Security ativado.
 
-#### 2.3 Ative o login por Magic Link
+#### 2.3 Crie o bucket de armazenamento para imagens
+1. No painel do Supabase, vá em **Storage → New bucket**
+2. Nomeie como `task-images` e ative a opção **Public**
+3. Vá em **Storage → task-images → Policies** e adicione três políticas:
+
+| Operação | Política |
+|----------|----------|
+| INSERT | `auth.role() = 'authenticated'` |
+| SELECT | *(sem restrição — público)* |
+| DELETE | `auth.uid()::text = (storage.foldername(name))[1]` |
+
+#### 2.4 Ative o login por Magic Link
 1. Vá em **Authentication → Providers**
 2. Certifique-se de que **Email** está habilitado
 3. Vá em **Authentication → URL Configuration**
 4. Adicione sua URL local em **Redirect URLs**: `http://localhost:5173`
    - Em produção, adicione também a URL do Vercel: `https://seu-app.vercel.app`
 
-#### 2.4 Obtenha as chaves de API
+#### 2.5 Obtenha as chaves de API
 1. Vá em **Project Settings → API**
 2. Copie a **Project URL** e a chave **anon / public**
 
@@ -175,3 +240,20 @@ O app estará disponível em `http://localhost:5173`.
 Após o deploy, volte ao Supabase → **Authentication → URL Configuration** e adicione a URL do Vercel em **Redirect URLs**.
 
 A cada `git push` para a branch `main`, o Vercel fará o redeploy automaticamente.
+
+---
+
+### Migrações (banco de dados existente)
+
+Se você já rodou uma versão anterior do `supabase-setup.sql`, execute os comandos abaixo no SQL Editor para adicionar as novas colunas:
+
+```sql
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS solution TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description_images TEXT[] DEFAULT '{}';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS solution_images TEXT[] DEFAULT '{}';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date DATE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES projects(id) ON DELETE CASCADE;
+```
+
+Em seguida, crie o bucket `task-images` no Storage conforme descrito no passo 2.3.
