@@ -228,6 +228,7 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-fade-in" />
 
         <Dialog.Content
+          onOpenAutoFocus={(e) => e.preventDefault()}
           className={cn(
             'fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
             'w-full max-w-2xl bg-card border border-border rounded-xl shadow-card-hover',
