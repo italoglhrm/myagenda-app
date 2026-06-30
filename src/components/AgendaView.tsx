@@ -125,7 +125,7 @@ export function AgendaView({ tasks, onMarkDone, onDelete, onOpenTask, projectMap
   }
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-2xl">
+    <div className="space-y-8 animate-fade-in">
       {groups.map((group) => {
         const style = GROUP_STYLES[group.variant]
         const count = group.tasks.length
