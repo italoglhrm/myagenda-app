@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   status              TEXT        NOT NULL CHECK (status IN ('todo', 'inprogress', 'done')),
   project_id          UUID        REFERENCES projects(id) ON DELETE SET NULL,
   due_date            DATE,
+  archived            BOOLEAN     NOT NULL DEFAULT FALSE,
   created_at          TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 

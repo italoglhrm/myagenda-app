@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { LogOut, List, LayoutDashboard, CalendarDays, Loader2, PanelLeftOpen, Layers, Globe } from 'lucide-react'
+import { LogOut, List, LayoutDashboard, CalendarDays, Loader2, PanelLeftOpen, Layers, Globe, Archive } from 'lucide-react'
 import type { View, Task } from './types'
 import { useAuth } from './hooks/useAuth'
 import { useTasks } from './hooks/useTasks'
@@ -31,6 +31,7 @@ function AppInner() {
   const [view, setView] = useState<View>('list')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showAll, setShowAll] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const [subprojectFilter, setSubprojectFilter] = useState<string | null>(null)
   const [openTask, setOpenTask] = useState<Task | null>(null)
 
@@ -51,7 +52,10 @@ function AppInner() {
     return selectedProjectId
   }, [showAll, selectedIsParent, selectedProjectId, childrenOfSelected])
 
-  const { tasks: allTasks, loading, addTask, updateTask, deleteTask, cycleStatus } = useTasks(effectiveProjectId)
+  const { tasks: allTasks, loading, addTask, updateTask, deleteTask, archiveTask, unarchiveTask, cycleStatus } = useTasks(
+    showArchived ? 'all' : effectiveProjectId,
+    showArchived
+  )
 
   // Apply optional client-side subproject filter
   const tasks = useMemo(
@@ -76,7 +80,7 @@ function AppInner() {
     () => Object.fromEntries(projects.map((p) => [p.id, p])),
     [projects]
   )
-  const showProjectTag = showAll || (selectedIsParent && !subprojectFilter)
+  const showProjectTag = showArchived || showAll || (selectedIsParent && !subprojectFilter)
 
   const VIEW_TABS: { id: View; labelKey: TranslationKey; icon: React.ReactNode }[] = [
     { id: 'list',   labelKey: 'list',   icon: <List className="h-4 w-4" /> },
@@ -213,7 +217,7 @@ function AppInner() {
           <main className="flex-1 overflow-y-auto px-6 py-4">
             {/* Top bar: subproject filter chips OR all-projects toggle */}
             <div className="flex items-center gap-2 mb-4 flex-wrap">
-              {selectedIsParent && !showAll ? (
+              {!showArchived && selectedIsParent && !showAll ? (
                 <>
                   <button
                     onClick={() => setSubprojectFilter(null)}
@@ -239,16 +243,28 @@ function AppInner() {
                   ))}
                 </>
               ) : (
-                <button
-                  onClick={() => setShowAll((v) => !v)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
-                    showAll ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
-                  )}
-                >
-                  <Layers className="h-3 w-3" />
-                  {t('allProjects')}
-                </button>
+                <>
+                  <button
+                    onClick={() => { setShowAll((v) => !v); setShowArchived(false) }}
+                    className={cn(
+                      'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                      showAll && !showArchived ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
+                    )}
+                  >
+                    <Layers className="h-3 w-3" />
+                    {t('allProjects')}
+                  </button>
+                  <button
+                    onClick={() => { setShowArchived((v) => !v); setShowAll(false) }}
+                    className={cn(
+                      'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                      showArchived ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
+                    )}
+                  >
+                    <Archive className="h-3 w-3" />
+                    {t('archived')}
+                  </button>
+                </>
               )}
             </div>
 
@@ -263,6 +279,8 @@ function AppInner() {
                     tasks={tasks}
                     onToggleDone={handleToggleDone}
                     onDelete={deleteTask}
+                    onArchive={showArchived ? undefined : archiveTask}
+                    onUnarchive={showArchived ? unarchiveTask : undefined}
                     onOpenTask={setOpenTask}
                     projectMap={showProjectTag ? projectMap : undefined}
                   />
@@ -272,6 +290,8 @@ function AppInner() {
                     tasks={tasks}
                     onCycle={cycleStatus}
                     onDelete={deleteTask}
+                    onArchive={showArchived ? undefined : archiveTask}
+                    onUnarchive={showArchived ? unarchiveTask : undefined}
                     onMove={(id, status) => updateTask(id, { status })}
                     onOpenTask={setOpenTask}
                     projectMap={showProjectTag ? projectMap : undefined}
@@ -282,6 +302,8 @@ function AppInner() {
                     tasks={tasks}
                     onMarkDone={(task) => updateTask(task.id, { status: 'done' })}
                     onDelete={deleteTask}
+                    onArchive={showArchived ? undefined : archiveTask}
+                    onUnarchive={showArchived ? unarchiveTask : undefined}
                     onOpenTask={setOpenTask}
                     projectMap={showProjectTag ? projectMap : undefined}
                   />

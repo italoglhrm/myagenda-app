@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCircle2, Inbox, Trash2 } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Inbox, Trash2, Archive, ArchiveRestore } from 'lucide-react'
 import type { Task, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
@@ -14,6 +14,8 @@ interface Props {
   tasks: Task[]
   onMarkDone: (task: Task) => void
   onDelete: (id: string) => void
+  onArchive?: (id: string) => void
+  onUnarchive?: (id: string) => void
   onOpenTask: (task: Task) => void
   projectMap?: Record<string, Project>
 }
@@ -95,7 +97,7 @@ const GROUP_STYLES: Record<Group['variant'], { header: string; dot: string }> = 
   undated:  { header: 'text-muted',     dot: 'bg-border' },
 }
 
-export function AgendaView({ tasks, onMarkDone, onDelete, onOpenTask, projectMap }: Props) {
+export function AgendaView({ tasks, onMarkDone, onDelete, onArchive, onUnarchive, onOpenTask, projectMap }: Props) {
   const { lang, t } = useLanguage()
   const groups = buildGroups(tasks, lang, {
     overdue: t('overdue'),
@@ -198,6 +200,20 @@ export function AgendaView({ tasks, onMarkDone, onDelete, onOpenTask, projectMap
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline text-xs">{t('done')}</span>
                       </Button>
+                      {onUnarchive && (
+                        <Tooltip label={t('unarchive')}>
+                          <Button variant="outline" size="icon-sm" onClick={() => onUnarchive(task.id)}>
+                            <ArchiveRestore className="h-3 w-3" />
+                          </Button>
+                        </Tooltip>
+                      )}
+                      {onArchive && (
+                        <Tooltip label={t('archive')}>
+                          <Button variant="outline" size="icon-sm" onClick={() => onArchive(task.id)}>
+                            <Archive className="h-3 w-3" />
+                          </Button>
+                        </Tooltip>
+                      )}
                       <ConfirmDialog
                         trigger={
                           <Tooltip label={t('delete')}>

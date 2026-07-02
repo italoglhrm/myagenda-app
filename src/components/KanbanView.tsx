@@ -10,7 +10,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { ArrowRight, Check, Trash2, CalendarDays } from 'lucide-react'
+import { ArrowRight, Check, Trash2, CalendarDays, Archive, ArchiveRestore } from 'lucide-react'
 import type { Task, Status, Priority, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
@@ -26,6 +26,8 @@ interface Props {
   tasks: Task[]
   onCycle: (task: Task) => void
   onDelete: (id: string) => void
+  onArchive?: (id: string) => void
+  onUnarchive?: (id: string) => void
   onMove: (id: string, status: Status) => void
   onOpenTask: (task: Task) => void
   projectMap?: Record<string, Project>
@@ -42,10 +44,12 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 }
 
 // ── Card (pure UI, no drag wiring) ────────────────────────────────────────────
-function CardContent({ task, onCycle, onDelete, onOpen, dimmed = false, t, lang, project }: {
+function CardContent({ task, onCycle, onDelete, onArchive, onUnarchive, onOpen, dimmed = false, t, lang, project }: {
   task: Task
   onCycle: () => void
   onDelete: () => void
+  onArchive?: () => void
+  onUnarchive?: () => void
   onOpen?: () => void
   dimmed?: boolean
   t: (key: any) => string
@@ -72,15 +76,25 @@ function CardContent({ task, onCycle, onDelete, onOpen, dimmed = false, t, lang,
         >
           {task.name}
         </p>
-        <span onClick={(e) => e.stopPropagation()}>
+        <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          {onUnarchive && (
+            <Tooltip label={t('unarchive')}>
+              <Button variant="outline" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mt-0.5" onClick={onUnarchive}>
+                <ArchiveRestore className="h-3 w-3" />
+              </Button>
+            </Tooltip>
+          )}
+          {onArchive && (
+            <Tooltip label={t('archive')}>
+              <Button variant="outline" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mt-0.5" onClick={onArchive}>
+                <Archive className="h-3 w-3" />
+              </Button>
+            </Tooltip>
+          )}
           <ConfirmDialog
             trigger={
               <Tooltip label={t('delete')}>
-                <Button
-                  variant="destructive"
-                  size="icon-sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mt-0.5 -mr-0.5"
-                >
+                <Button variant="destructive" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mt-0.5 -mr-0.5">
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </Tooltip>
@@ -145,10 +159,12 @@ function CardContent({ task, onCycle, onDelete, onOpen, dimmed = false, t, lang,
 }
 
 // ── Draggable card ─────────────────────────────────────────────────────────────
-function DraggableCard({ task, onCycle, onDelete, onOpen, t, lang, project }: {
+function DraggableCard({ task, onCycle, onDelete, onArchive, onUnarchive, onOpen, t, lang, project }: {
   task: Task
   onCycle: () => void
   onDelete: () => void
+  onArchive?: () => void
+  onUnarchive?: () => void
   onOpen: () => void
   t: (key: any) => string
   lang: 'en' | 'pt'
@@ -168,13 +184,13 @@ function DraggableCard({ task, onCycle, onDelete, onOpen, t, lang, project }: {
       {...attributes}
       {...listeners}
     >
-      <CardContent task={task} onCycle={onCycle} onDelete={onDelete} onOpen={onOpen} t={t} lang={lang} project={project} />
+      <CardContent task={task} onCycle={onCycle} onDelete={onDelete} onArchive={onArchive} onUnarchive={onUnarchive} onOpen={onOpen} t={t} lang={lang} project={project} />
     </div>
   )
 }
 
 // ── Droppable column ───────────────────────────────────────────────────────────
-function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, onOpenTask, t, lang, projectMap }: {
+function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, onArchive, onUnarchive, onOpenTask, t, lang, projectMap }: {
   status: Status
   label: string
   color: string
@@ -182,6 +198,8 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, o
   tasks: Task[]
   onCycle: (task: Task) => void
   onDelete: (id: string) => void
+  onArchive?: (id: string) => void
+  onUnarchive?: (id: string) => void
   onOpenTask: (task: Task) => void
   t: (key: any) => string
   lang: 'en' | 'pt'
@@ -216,6 +234,8 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, o
               task={task}
               onCycle={() => onCycle(task)}
               onDelete={() => onDelete(task.id)}
+              onArchive={onArchive ? () => onArchive(task.id) : undefined}
+              onUnarchive={onUnarchive ? () => onUnarchive(task.id) : undefined}
               onOpen={() => onOpenTask(task)}
               t={t}
               lang={lang}
@@ -229,7 +249,7 @@ function DroppableColumn({ status, label, color, bg, tasks, onCycle, onDelete, o
 }
 
 // ── Main view ─────────────────────────────────────────────────────────────────
-export function KanbanView({ tasks, onCycle, onDelete, onMove, onOpenTask, projectMap }: Props) {
+export function KanbanView({ tasks, onCycle, onDelete, onArchive, onUnarchive, onMove, onOpenTask, projectMap }: Props) {
   const { lang, t } = useLanguage()
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const COLUMNS = COLUMN_META.map((c) => ({ ...c, label: t(c.status) }))
@@ -267,6 +287,8 @@ export function KanbanView({ tasks, onCycle, onDelete, onMove, onOpenTask, proje
             tasks={sorted(col.status)}
             onCycle={onCycle}
             onDelete={onDelete}
+            onArchive={onArchive}
+            onUnarchive={onUnarchive}
             t={t}
             lang={lang}
             onOpenTask={onOpenTask}

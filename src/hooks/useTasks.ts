@@ -13,17 +13,18 @@ function sortByPriority(tasks: Task[]): Task[] {
 }
 
 // projectId: null = Inbox, string = specific project, string[] = multiple projects, 'all' = every task
-export function useTasks(projectId: string | string[] | null | 'all') {
+// archived: when true, fetches archived tasks instead of active ones
+export function useTasks(projectId: string | string[] | null | 'all', archived = false) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
-  const key = Array.isArray(projectId) ? projectId.join(',') : projectId
+  const key = `${Array.isArray(projectId) ? projectId.join(',') : projectId}:${archived}`
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
-    let query = supabase.from('tasks').select('*')
+    let query = supabase.from('tasks').select('*').eq('archived', archived)
 
-    if (projectId !== 'all') {
+    if (!archived && projectId !== 'all') {
       if (projectId === null) query = query.is('project_id', null)
       else if (Array.isArray(projectId)) query = query.in('project_id', projectId)
       else query = query.eq('project_id', projectId)
@@ -100,6 +101,16 @@ export function useTasks(projectId: string | string[] | null | 'all') {
     if (!error) setTasks((prev) => prev.filter((t) => t.id !== id))
   }
 
+  async function archiveTask(id: string) {
+    const { error } = await supabase.from('tasks').update({ archived: true }).eq('id', id)
+    if (!error) setTasks((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  async function unarchiveTask(id: string) {
+    const { error } = await supabase.from('tasks').update({ archived: false }).eq('id', id)
+    if (!error) setTasks((prev) => prev.filter((t) => t.id !== id))
+  }
+
   function cycleStatus(task: Task) {
     const next: Record<Status, Status> = {
       todo: 'inprogress',
@@ -109,5 +120,5 @@ export function useTasks(projectId: string | string[] | null | 'all') {
     return updateTask(task.id, { status: next[task.status] })
   }
 
-  return { tasks, loading, addTask, updateTask, deleteTask, cycleStatus }
+  return { tasks, loading, addTask, updateTask, deleteTask, archiveTask, unarchiveTask, cycleStatus }
 }

@@ -101,6 +101,11 @@ export const translations = {
     remaining: 'remaining',
     // delete project dialog description suffix
     deleteProjectSuffix: 'will be deleted. Its tasks will move to Inbox.',
+    // archive
+    archive: 'Archive',
+    unarchive: 'Unarchive',
+    archived: 'Archived',
+    noArchivedTasks: 'No archived tasks.',
   },
   pt: {
     // topbar
@@ -202,6 +207,11 @@ export const translations = {
     remaining: 'restantes',
     // delete project dialog description suffix
     deleteProjectSuffix: 'será excluído. As tarefas irão para a Caixa de entrada.',
+    // archive
+    archive: 'Arquivar',
+    unarchive: 'Desarquivar',
+    archived: 'Arquivadas',
+    noArchivedTasks: 'Nenhuma tarefa arquivada.',
   },
 } as const
 

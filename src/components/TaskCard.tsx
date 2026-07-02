@@ -1,4 +1,4 @@
-import { Trash2, CalendarDays } from 'lucide-react'
+import { Trash2, CalendarDays, Archive, ArchiveRestore } from 'lucide-react'
 import { Tooltip } from './ui/tooltip'
 import type { Task, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
@@ -15,12 +15,14 @@ interface Props {
   task: Task
   onToggleDone: (task: Task) => void
   onDelete: (id: string) => void
+  onArchive?: (id: string) => void
+  onUnarchive?: (id: string) => void
   onOpen?: () => void
   project?: Project
   className?: string
 }
 
-export function TaskCard({ task, onToggleDone, onDelete, onOpen, project, className }: Props) {
+export function TaskCard({ task, onToggleDone, onDelete, onArchive, onUnarchive, onOpen, project, className }: Props) {
   const { lang, t } = useLanguage()
   const isDone = task.status === 'done'
   const colors = PRIORITY_COLORS[task.priority]
@@ -81,6 +83,30 @@ export function TaskCard({ task, onToggleDone, onDelete, onOpen, project, classN
           </Badge>
         )}
 
+        {onUnarchive && (
+          <Tooltip label={t('unarchive')}>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => onUnarchive(task.id)}
+            >
+              <ArchiveRestore className="h-3.5 w-3.5" />
+            </Button>
+          </Tooltip>
+        )}
+        {onArchive && (
+          <Tooltip label={t('archive')}>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => onArchive(task.id)}
+            >
+              <Archive className="h-3.5 w-3.5" />
+            </Button>
+          </Tooltip>
+        )}
         <ConfirmDialog
           trigger={
             <Tooltip label={t('delete')}>

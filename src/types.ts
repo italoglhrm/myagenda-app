@@ -15,6 +15,7 @@ export interface Task {
   status: Status
   project_id: string | null
   due_date: string | null   // ISO date string YYYY-MM-DD
+  archived: boolean
   created_at: string
 }
 
