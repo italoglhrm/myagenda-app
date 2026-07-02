@@ -53,7 +53,7 @@ function AppInner() {
   }, [showAll, selectedIsParent, selectedProjectId, childrenOfSelected])
 
   const { tasks: allTasks, loading, addTask, updateTask, deleteTask, archiveTask, unarchiveTask, cycleStatus } = useTasks(
-    showArchived ? 'all' : effectiveProjectId,
+    showAll || showArchived ? 'all' : effectiveProjectId,
     showArchived
   )
 
@@ -80,7 +80,7 @@ function AppInner() {
     () => Object.fromEntries(projects.map((p) => [p.id, p])),
     [projects]
   )
-  const showProjectTag = showArchived || showAll || (selectedIsParent && !subprojectFilter)
+  const showProjectTag = showAll || showArchived || (selectedIsParent && !subprojectFilter)
 
   const VIEW_TABS: { id: View; labelKey: TranslationKey; icon: React.ReactNode }[] = [
     { id: 'list',   labelKey: 'list',   icon: <List className="h-4 w-4" /> },
@@ -245,17 +245,17 @@ function AppInner() {
               ) : (
                 <>
                   <button
-                    onClick={() => { setShowAll((v) => !v); setShowArchived(false) }}
+                    onClick={() => setShowAll((v) => !v)}
                     className={cn(
                       'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
-                      showAll && !showArchived ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
+                      showAll ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
                     )}
                   >
                     <Layers className="h-3 w-3" />
                     {t('allProjects')}
                   </button>
                   <button
-                    onClick={() => { setShowArchived((v) => !v); setShowAll(false) }}
+                    onClick={() => setShowArchived((v) => !v)}
                     className={cn(
                       'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
                       showArchived ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
