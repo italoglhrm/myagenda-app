@@ -74,6 +74,35 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
   )
 }
 
+// ── Image lightbox ───────────────────────────────────────────────────────────
+function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] bg-black/80 flex items-center justify-center p-4 animate-fade-in"
+      onClick={onClose}
+    >
+      <button
+        className="absolute top-4 right-4 w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+        onClick={onClose}
+      >
+        <X className="h-4 w-4 text-white" />
+      </button>
+      <img
+        src={url}
+        alt=""
+        className="max-w-full max-h-full rounded-lg shadow-2xl object-contain"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  )
+}
+
 // ── Image section ────────────────────────────────────────────────────────────
 function ImageSection({
   images,
@@ -89,14 +118,28 @@ function ImageSection({
   label: string
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [broken, setBroken] = useState<Set<string>>(new Set())
 
   return (
     <div className="mt-2">
       {images.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
           {images.map((url) => (
-            <div key={url} className="group relative w-24 h-24 rounded-lg overflow-hidden border border-border flex-shrink-0">
-              <img src={url} alt="" className="w-full h-full object-cover" />
+            <div key={url} className="group relative w-24 h-24 rounded-lg overflow-hidden border border-border flex-shrink-0 bg-border/30">
+              {broken.has(url) ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ImageIcon className="h-6 w-6 text-muted" />
+                </div>
+              ) : (
+                <img
+                  src={url}
+                  alt=""
+                  className="w-full h-full object-cover cursor-zoom-in"
+                  onClick={() => setPreview(url)}
+                  onError={() => setBroken((prev) => new Set(prev).add(url))}
+                />
+              )}
               <button
                 type="button"
                 onClick={() => onRemove(url)}
@@ -124,6 +167,7 @@ function ImageSection({
         className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onAdd(f); e.target.value = '' }}
       />
+      {preview && <ImageLightbox url={preview} onClose={() => setPreview(null)} />}
     </div>
   )
 }
