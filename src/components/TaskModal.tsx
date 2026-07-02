@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Popover from '@radix-ui/react-popover'
-import { X, Trash2, ChevronDown, ImageIcon, Loader2, Check } from 'lucide-react'
+import { X, ChevronDown, ImageIcon, Loader2, Check } from 'lucide-react'
 import type { Task, Priority, Category, Status, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
@@ -10,7 +10,6 @@ import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { Button } from './ui/button'
 import { DatePicker } from './ui/date-picker'
-import { ConfirmDialog } from './ui/confirm-dialog'
 import { cn } from '../lib/utils'
 
 interface Props {
@@ -497,20 +496,6 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
             </div>
           </div>
 
-          {/* ── Footer ── */}
-          <div className="flex items-center px-6 py-4 border-t border-border">
-            <ConfirmDialog
-              trigger={
-                <Button variant="destructive" size="sm" className="gap-1.5">
-                  <Trash2 className="h-3.5 w-3.5" />
-                  {t('delete')}
-                </Button>
-              }
-              title={t('deleteTaskTitle')}
-              description={`"${task?.name ?? ''}" ${t('permanentlyRemoved')}`}
-              onConfirm={() => { if (task) { onDelete(task.id); onClose() } }}
-            />
-          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
