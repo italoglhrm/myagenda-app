@@ -83,7 +83,7 @@ export function TaskCard({ task, onToggleDone, onDelete, onArchive, onUnarchive,
           </Badge>
         )}
 
-        {onUnarchive && (
+        {task.archived && onUnarchive ? (
           <Tooltip label={t('unarchive')}>
             <Button
               variant="outline"
@@ -94,8 +94,7 @@ export function TaskCard({ task, onToggleDone, onDelete, onArchive, onUnarchive,
               <ArchiveRestore className="h-3.5 w-3.5" />
             </Button>
           </Tooltip>
-        )}
-        {onArchive && (
+        ) : onArchive ? (
           <Tooltip label={t('archive')}>
             <Button
               variant="outline"
@@ -106,7 +105,7 @@ export function TaskCard({ task, onToggleDone, onDelete, onArchive, onUnarchive,
               <Archive className="h-3.5 w-3.5" />
             </Button>
           </Tooltip>
-        )}
+        ) : null}
         <ConfirmDialog
           trigger={
             <Tooltip label={t('delete')}>

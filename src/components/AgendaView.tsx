@@ -200,20 +200,19 @@ export function AgendaView({ tasks, onMarkDone, onDelete, onArchive, onUnarchive
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline text-xs">{t('done')}</span>
                       </Button>
-                      {onUnarchive && (
+                      {task.archived && onUnarchive ? (
                         <Tooltip label={t('unarchive')}>
                           <Button variant="outline" size="icon-sm" onClick={() => onUnarchive(task.id)}>
                             <ArchiveRestore className="h-3 w-3" />
                           </Button>
                         </Tooltip>
-                      )}
-                      {onArchive && (
+                      ) : onArchive ? (
                         <Tooltip label={t('archive')}>
                           <Button variant="outline" size="icon-sm" onClick={() => onArchive(task.id)}>
                             <Archive className="h-3 w-3" />
                           </Button>
                         </Tooltip>
-                      )}
+                      ) : null}
                       <ConfirmDialog
                         trigger={
                           <Tooltip label={t('delete')}>

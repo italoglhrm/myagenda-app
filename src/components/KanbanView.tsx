@@ -77,20 +77,19 @@ function CardContent({ task, onCycle, onDelete, onArchive, onUnarchive, onOpen, 
           {task.name}
         </p>
         <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          {onUnarchive && (
+          {task.archived && onUnarchive ? (
             <Tooltip label={t('unarchive')}>
               <Button variant="outline" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mt-0.5" onClick={onUnarchive}>
                 <ArchiveRestore className="h-3 w-3" />
               </Button>
             </Tooltip>
-          )}
-          {onArchive && (
+          ) : onArchive ? (
             <Tooltip label={t('archive')}>
               <Button variant="outline" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mt-0.5" onClick={onArchive}>
                 <Archive className="h-3 w-3" />
               </Button>
             </Tooltip>
-          )}
+          ) : null}
           <ConfirmDialog
             trigger={
               <Tooltip label={t('delete')}>

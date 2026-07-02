@@ -13,8 +13,8 @@ function sortByPriority(tasks: Task[]): Task[] {
 }
 
 // projectId: null = Inbox, string = specific project, string[] = multiple projects, 'all' = every task
-// archived: when true, fetches archived tasks instead of active ones
-export function useTasks(projectId: string | string[] | null | 'all', archived = false) {
+// archived: false = active only, true = archived only, 'all' = both active and archived
+export function useTasks(projectId: string | string[] | null | 'all', archived: boolean | 'all' = false) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -22,7 +22,8 @@ export function useTasks(projectId: string | string[] | null | 'all', archived =
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
-    let query = supabase.from('tasks').select('*').eq('archived', archived)
+    let query = supabase.from('tasks').select('*')
+    if (archived !== 'all') query = query.eq('archived', archived)
 
     if (projectId !== 'all') {
       if (projectId === null) query = query.is('project_id', null)
@@ -103,12 +104,18 @@ export function useTasks(projectId: string | string[] | null | 'all', archived =
 
   async function archiveTask(id: string) {
     const { error } = await supabase.from('tasks').update({ archived: true }).eq('id', id)
-    if (!error) setTasks((prev) => prev.filter((t) => t.id !== id))
+    if (!error) {
+      if (archived === 'all') setTasks((prev) => prev.map((t) => t.id === id ? { ...t, archived: true } : t))
+      else setTasks((prev) => prev.filter((t) => t.id !== id))
+    }
   }
 
   async function unarchiveTask(id: string) {
     const { error } = await supabase.from('tasks').update({ archived: false }).eq('id', id)
-    if (!error) setTasks((prev) => prev.filter((t) => t.id !== id))
+    if (!error) {
+      if (archived === 'all') setTasks((prev) => prev.map((t) => t.id === id ? { ...t, archived: false } : t))
+      else setTasks((prev) => prev.filter((t) => t.id !== id))
+    }
   }
 
   function cycleStatus(task: Task) {
