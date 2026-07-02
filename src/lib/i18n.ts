@@ -106,6 +106,7 @@ export const translations = {
     unarchive: 'Unarchive',
     archived: 'Archived',
     archivedAndActive: 'All + Archived',
+    active: 'Active only',
     noArchivedTasks: 'No archived tasks.',
   },
   pt: {
@@ -213,6 +214,7 @@ export const translations = {
     unarchive: 'Desarquivar',
     archived: 'Arquivadas',
     archivedAndActive: 'Todas + Arquivadas',
+    active: 'Somente ativas',
     noArchivedTasks: 'Nenhuma tarefa arquivada.',
   },
 } as const

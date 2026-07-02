@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { LogOut, List, LayoutDashboard, CalendarDays, Loader2, PanelLeftOpen, Layers, Globe, Archive } from 'lucide-react'
+import { LogOut, List, LayoutDashboard, CalendarDays, Loader2, PanelLeftOpen, Layers, Globe, Archive, Check } from 'lucide-react'
+import * as Popover from '@radix-ui/react-popover'
 import type { View, Task } from './types'
 import { useAuth } from './hooks/useAuth'
 import { useTasks } from './hooks/useTasks'
@@ -256,16 +257,43 @@ function AppInner() {
                     <Layers className="h-3 w-3" />
                     {t('allProjects')}
                   </button>
-                  <button
-                    onClick={() => setArchivedMode((m) => m === 'off' ? 'only' : m === 'only' ? 'all' : 'off')}
-                    className={cn(
-                      'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
-                      archivedMode !== 'off' ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
-                    )}
-                  >
-                    <Archive className="h-3 w-3" />
-                    {archivedMode === 'all' ? t('archivedAndActive') : t('archived')}
-                  </button>
+                  <Popover.Root>
+                    <Popover.Trigger asChild>
+                      <button
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                          archivedMode !== 'off' ? 'bg-accent-light text-accent' : 'text-muted hover:text-foreground hover:bg-border/50'
+                        )}
+                      >
+                        <Archive className="h-3 w-3" />
+                        {archivedMode === 'all' ? t('archivedAndActive') : t('archived')}
+                      </button>
+                    </Popover.Trigger>
+                    <Popover.Portal>
+                      <Popover.Content
+                        side="bottom"
+                        align="start"
+                        sideOffset={6}
+                        className="z-50 min-w-[160px] rounded-lg border border-border bg-card shadow-card-hover p-1 animate-fade-in"
+                      >
+                        {(['only', 'all', 'off'] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            onClick={() => setArchivedMode(mode)}
+                            className={cn(
+                              'w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-left',
+                              archivedMode === mode ? 'bg-accent-light text-accent' : 'text-foreground hover:bg-border/50'
+                            )}
+                          >
+                            <span className="flex-1">
+                              {mode === 'only' ? t('archived') : mode === 'all' ? t('archivedAndActive') : t('active')}
+                            </span>
+                            {archivedMode === mode && <Check className="h-3 w-3 flex-shrink-0" />}
+                          </button>
+                        ))}
+                      </Popover.Content>
+                    </Popover.Portal>
+                  </Popover.Root>
                 </>
               )}
             </div>
