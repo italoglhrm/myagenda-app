@@ -53,7 +53,7 @@ function AppInner() {
   }, [showAll, selectedIsParent, selectedProjectId, childrenOfSelected])
 
   const { tasks: allTasks, loading, addTask, updateTask, deleteTask, archiveTask, unarchiveTask, cycleStatus } = useTasks(
-    showAll || showArchived ? 'all' : effectiveProjectId,
+    effectiveProjectId,
     showArchived
   )
 
@@ -80,7 +80,7 @@ function AppInner() {
     () => Object.fromEntries(projects.map((p) => [p.id, p])),
     [projects]
   )
-  const showProjectTag = showAll || showArchived || (selectedIsParent && !subprojectFilter)
+  const showProjectTag = showAll || (selectedIsParent && !subprojectFilter)
 
   const VIEW_TABS: { id: View; labelKey: TranslationKey; icon: React.ReactNode }[] = [
     { id: 'list',   labelKey: 'list',   icon: <List className="h-4 w-4" /> },

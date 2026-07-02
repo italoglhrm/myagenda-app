@@ -24,7 +24,7 @@ export function useTasks(projectId: string | string[] | null | 'all', archived =
     setLoading(true)
     let query = supabase.from('tasks').select('*').eq('archived', archived)
 
-    if (!archived && projectId !== 'all') {
+    if (projectId !== 'all') {
       if (projectId === null) query = query.is('project_id', null)
       else if (Array.isArray(projectId)) query = query.in('project_id', projectId)
       else query = query.eq('project_id', projectId)
