@@ -13,8 +13,8 @@ A personal task manager built for focus and clarity. Organize tasks across proje
 - **Magic Link auth** — passwordless sign-in via email
 - **Projects & subprojects** — one level of nesting; parent projects roll up tasks from all children
 - **Three views** — List (grouped by priority), Board (Kanban), Agenda (grouped by due date)
-- **Task detail modal** — edit title, description, solution notes, priority, category, status, and due date
-- **Image attachments** — attach images to description and solution fields (stored in Supabase Storage)
+- **Task detail modal** — autosaves as you type; edit title, description, solution notes, priority, category, status, and due date
+- **Image attachments** — attach images to description and solution fields, stored privately in Supabase Storage
 - **Drag-and-drop** — reorder tasks between Kanban columns
 - **Dark / light theme**
 - **English / Portuguese UI**
@@ -53,29 +53,48 @@ This creates the `tasks` and `projects` tables with Row Level Security enabled.
 
 #### 2.3 Create the storage bucket for task images
 1. Go to **Storage → New bucket**
-2. Name it `task-images` and enable **Public bucket**
-3. Click **Save**
+2. Name it `task-images`
+3. Leave **Public bucket disabled** (images are private — only the authenticated owner can access them)
+4. Click **Save**
 
 #### 2.4 Add storage policies
-Go to **Storage → Policies → New policy** and add the following two policies on the `task-images` bucket. For each one, click **"For full customization"**.
+Images are protected by Row Level Security. You need to add three policies so users can upload, view, and delete only their own images.
 
-**Policy 1 — allow authenticated users to upload:**
-- Policy name: `authenticated users can upload`
+Go to **Storage → Policies → New policy** on the `task-images` bucket. For each policy, click **"For full customization"** and fill in the fields below.
+
+---
+
+**Policy 1 — Upload (INSERT)**
+- Policy name: `owner can upload`
 - Allowed operation: `INSERT`
-- USING / WITH CHECK expression:
-  ```sql
-  auth.role() = 'authenticated'
-  ```
+- WITH CHECK expression:
+```sql
+bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]
+```
 
-**Policy 2 — allow users to delete their own images:**
-- Policy name: `users can delete own task images`
+---
+
+**Policy 2 — View (SELECT)**
+- Policy name: `owner can view`
+- Allowed operation: `SELECT`
+- USING expression:
+```sql
+bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]
+```
+
+---
+
+**Policy 3 — Delete (DELETE)**
+- Policy name: `owner can delete`
 - Allowed operation: `DELETE`
 - USING expression:
-  ```sql
-  auth.uid()::text = (storage.foldername(name))[1]
-  ```
+```sql
+bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]
+```
 
-> SELECT is already covered by the public bucket setting — no policy needed.
+---
+
+> All three policies use the same logic: the first segment of the file path (`user_id/task_id/file.jpg`) must match the logged-in user's `uid`. No one else can see or touch your images.
 
 #### 2.5 Enable Magic Link auth
 1. Go to **Authentication → Providers**
@@ -139,8 +158,8 @@ Every `git push` to `main` will trigger an automatic redeploy.
 - **Login por Magic Link** — autenticação sem senha via e-mail
 - **Projetos e subprojetos** — um nível de aninhamento; projetos pai agregam tarefas de todos os filhos
 - **Três visualizações** — Lista (agrupada por prioridade), Quadro (Kanban), Agenda (agrupada por prazo)
-- **Modal de detalhes da tarefa** — edite título, descrição, notas de solução, prioridade, categoria, status e prazo
-- **Anexos de imagem** — adicione imagens à descrição e ao campo de solução (armazenadas no Supabase Storage)
+- **Modal de detalhes da tarefa** — salva automaticamente enquanto você digita; edite título, descrição, notas de solução, prioridade, categoria, status e prazo
+- **Anexos de imagem** — adicione imagens à descrição e ao campo de solução, armazenadas de forma privada no Supabase Storage
 - **Arrastar e soltar** — reorganize tarefas entre colunas do Kanban
 - **Tema escuro / claro**
 - **Interface em Inglês / Português**
@@ -179,29 +198,48 @@ Isso cria as tabelas `tasks` e `projects` com Row Level Security ativado.
 
 #### 2.3 Crie o bucket de armazenamento para imagens
 1. Vá em **Storage → New bucket**
-2. Nomeie como `task-images` e ative a opção **Public bucket**
-3. Clique em **Save**
+2. Nomeie como `task-images`
+3. Deixe o **Public bucket desativado** (as imagens são privadas — só o dono autenticado pode acessá-las)
+4. Clique em **Save**
 
 #### 2.4 Adicione as políticas de armazenamento
-Vá em **Storage → Policies → New policy** e adicione as duas políticas abaixo no bucket `task-images`. Em cada uma, clique em **"For full customization"**.
+As imagens são protegidas por Row Level Security. Você precisa adicionar três políticas para que os usuários possam fazer upload, visualizar e deletar apenas as próprias imagens.
 
-**Política 1 — permitir upload para usuários autenticados:**
-- Policy name: `authenticated users can upload`
+Vá em **Storage → Policies → New policy** no bucket `task-images`. Em cada política, clique em **"For full customization"** e preencha os campos abaixo.
+
+---
+
+**Política 1 — Upload (INSERT)**
+- Policy name: `owner can upload`
 - Allowed operation: `INSERT`
-- USING / WITH CHECK expression:
-  ```sql
-  auth.role() = 'authenticated'
-  ```
+- WITH CHECK expression:
+```sql
+bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]
+```
 
-**Política 2 — permitir que usuários deletem suas próprias imagens:**
-- Policy name: `users can delete own task images`
+---
+
+**Política 2 — Visualizar (SELECT)**
+- Policy name: `owner can view`
+- Allowed operation: `SELECT`
+- USING expression:
+```sql
+bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]
+```
+
+---
+
+**Política 3 — Deletar (DELETE)**
+- Policy name: `owner can delete`
 - Allowed operation: `DELETE`
 - USING expression:
-  ```sql
-  auth.uid()::text = (storage.foldername(name))[1]
-  ```
+```sql
+bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]
+```
 
-> SELECT já está coberto pelo bucket público — nenhuma política adicional é necessária.
+---
+
+> As três políticas usam a mesma lógica: o primeiro segmento do caminho do arquivo (`user_id/task_id/arquivo.jpg`) precisa bater com o `uid` do usuário logado. Ninguém além de você acessa suas imagens.
 
 #### 2.5 Ative o login por Magic Link
 1. Vá em **Authentication → Providers**

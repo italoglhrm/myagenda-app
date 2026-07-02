@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Popover from '@radix-ui/react-popover'
-import { X, Trash2, ChevronDown, ImageIcon, Loader2 } from 'lucide-react'
+import { X, Trash2, ChevronDown, ImageIcon, Loader2, Check } from 'lucide-react'
 import type { Task, Priority, Category, Status, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
@@ -74,8 +74,49 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
   )
 }
 
-// ── Image lightbox ───────────────────────────────────────────────────────────
-function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
+// ── Signed image — fetches a short-lived URL from a stored path ──────────────
+function SignedImage({
+  path,
+  className,
+  onClick,
+}: {
+  path: string
+  className?: string
+  onClick?: (signedUrl: string) => void
+}) {
+  const [src, setSrc] = useState<string | null>(null)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    setSrc(null)
+    setError(false)
+    supabase.storage
+      .from('task-images')
+      .createSignedUrl(path, 3600)
+      .then(({ data, error }) => {
+        if (data && !error) setSrc(data.signedUrl)
+        else setError(true)
+      })
+  }, [path])
+
+  if (error) return (
+    <div className={cn('flex items-center justify-center bg-border/30', className)}>
+      <ImageIcon className="h-6 w-6 text-muted" />
+    </div>
+  )
+  if (!src) return <div className={cn('bg-border/30 animate-pulse', className)} />
+  return (
+    <img
+      src={src}
+      alt=""
+      className={cn(className, onClick && 'cursor-zoom-in')}
+      onClick={() => onClick?.(src)}
+    />
+  )
+}
+
+// ── Image lightbox ────────────────────────────────────────────────────────────
+function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -94,7 +135,7 @@ function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
         <X className="h-4 w-4 text-white" />
       </button>
       <img
-        src={url}
+        src={src}
         alt=""
         className="max-w-full max-h-full rounded-lg shadow-2xl object-contain"
         onClick={(e) => e.stopPropagation()}
@@ -103,46 +144,37 @@ function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
   )
 }
 
-// ── Image section ────────────────────────────────────────────────────────────
+// ── Image section ─────────────────────────────────────────────────────────────
 function ImageSection({
-  images,
+  paths,
   onAdd,
   onRemove,
   uploading,
   label,
 }: {
-  images: string[]
+  paths: string[]
   onAdd: (file: File) => void
-  onRemove: (url: string) => void
+  onRemove: (path: string) => void
   uploading: boolean
   label: string
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const [broken, setBroken] = useState<Set<string>>(new Set())
 
   return (
     <div className="mt-2">
-      {images.length > 0 && (
+      {paths.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
-          {images.map((url) => (
-            <div key={url} className="group relative w-24 h-24 rounded-lg overflow-hidden border border-border flex-shrink-0 bg-border/30">
-              {broken.has(url) ? (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon className="h-6 w-6 text-muted" />
-                </div>
-              ) : (
-                <img
-                  src={url}
-                  alt=""
-                  className="w-full h-full object-cover cursor-zoom-in"
-                  onClick={() => setPreview(url)}
-                  onError={() => setBroken((prev) => new Set(prev).add(url))}
-                />
-              )}
+          {paths.map((path) => (
+            <div key={path} className="group relative w-24 h-24 rounded-lg overflow-hidden border border-border flex-shrink-0">
+              <SignedImage
+                path={path}
+                className="w-full h-full object-cover"
+                onClick={(src) => setPreview(src)}
+              />
               <button
                 type="button"
-                onClick={() => onRemove(url)}
+                onClick={() => onRemove(path)}
                 className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-3 w-3 text-white" />
@@ -167,7 +199,7 @@ function ImageSection({
         className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onAdd(f); e.target.value = '' }}
       />
-      {preview && <ImageLightbox url={preview} onClose={() => setPreview(null)} />}
+      {preview && <ImageLightbox src={preview} onClose={() => setPreview(null)} />}
     </div>
   )
 }
@@ -180,17 +212,17 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [solution, setSolution] = useState('')
-  const [descImages, setDescImages] = useState<string[]>([])
-  const [solImages, setSolImages] = useState<string[]>([])
+  const [descPaths, setDescPaths] = useState<string[]>([])
+  const [solPaths, setSolPaths] = useState<string[]>([])
   const [priority, setPriority] = useState<Priority>('normal')
   const [category, setCategory] = useState<Category>('personal')
   const [status, setStatus] = useState<Status>('todo')
   const [dueDate, setDueDate] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [dirty, setDirty] = useState(false)
+  const [autoSaving, setAutoSaving] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [uploadingDesc, setUploadingDesc] = useState(false)
   const [uploadingSol, setUploadingSol] = useState(false)
   const titleRef = useRef<HTMLTextAreaElement>(null)
+  const initialized = useRef(false)
 
   const resizeTitle = useCallback(() => {
     const el = titleRef.current
@@ -201,24 +233,57 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
 
   useEffect(() => {
     if (task) {
+      initialized.current = false
       setName(task.name)
       setDescription(task.description ?? '')
       setSolution(task.solution ?? '')
-      setDescImages(task.description_images ?? [])
-      setSolImages(task.solution_images ?? [])
+      setDescPaths(task.description_images ?? [])
+      setSolPaths(task.solution_images ?? [])
       setPriority(task.priority)
       setCategory(task.category)
       setStatus(task.status)
       setDueDate(task.due_date ?? '')
-      setDirty(false)
-      // resize title after state update
-      setTimeout(resizeTitle, 0)
+      setAutoSaving('idle')
+      setTimeout(() => {
+        initialized.current = true
+        resizeTitle()
+      }, 0)
     }
   }, [task?.id, resizeTitle])
 
-  function mark<T>(setter: (v: T) => void) {
-    return (v: T) => { setter(v); setDirty(true) }
+  async function save(changes: Partial<Pick<Task, 'name' | 'description' | 'solution' | 'description_images' | 'solution_images' | 'priority' | 'category' | 'status' | 'due_date'>>) {
+    if (!task) return
+    setAutoSaving('saving')
+    await onSave(task.id, changes)
+    setAutoSaving('saved')
+    setTimeout(() => setAutoSaving('idle'), 1500)
   }
+
+  function handleNameBlur() {
+    if (!initialized.current || !task) return
+    const trimmed = name.trim()
+    if (!trimmed || trimmed === task.name) return
+    save({ name: trimmed })
+  }
+
+  function handleDescriptionBlur() {
+    if (!initialized.current || !task) return
+    const val = description.trim() || null
+    if (val === (task.description ?? null)) return
+    save({ description: val })
+  }
+
+  function handleSolutionBlur() {
+    if (!initialized.current || !task) return
+    const val = solution.trim() || null
+    if (val === (task.solution ?? null)) return
+    save({ solution: val })
+  }
+
+  function handlePriority(p: Priority) { setPriority(p); save({ priority: p }) }
+  function handleCategory(c: Category) { setCategory(c); save({ category: c }) }
+  function handleStatus(s: Status) { setStatus(s); save({ status: s }) }
+  function handleDueDate(v: string) { setDueDate(v); save({ due_date: v || null }) }
 
   async function uploadImage(field: 'desc' | 'sol', file: File) {
     const { data: { user } } = await supabase.auth.getUser()
@@ -234,39 +299,39 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
       toast('error', error.message)
       return
     }
-    const { data: { publicUrl } } = supabase.storage.from('task-images').getPublicUrl(path)
-    if (field === 'desc') setDescImages((prev) => [...prev, publicUrl])
-    else setSolImages((prev) => [...prev, publicUrl])
-    setDirty(true)
+    // Store the path (not the public URL) so we can generate signed URLs later
+    if (field === 'desc') {
+      setDescPaths((prev) => {
+        const next = [...prev, path]
+        save({ description_images: next })
+        return next
+      })
+    } else {
+      setSolPaths((prev) => {
+        const next = [...prev, path]
+        save({ solution_images: next })
+        return next
+      })
+    }
   }
 
-  async function removeImage(field: 'desc' | 'sol', url: string) {
-    if (field === 'desc') setDescImages((prev) => prev.filter((u) => u !== url))
-    else setSolImages((prev) => prev.filter((u) => u !== url))
-    setDirty(true)
-    // best-effort remove from storage
+  async function removeImage(field: 'desc' | 'sol', path: string) {
+    if (field === 'desc') {
+      setDescPaths((prev) => {
+        const next = prev.filter((p) => p !== path)
+        save({ description_images: next })
+        return next
+      })
+    } else {
+      setSolPaths((prev) => {
+        const next = prev.filter((p) => p !== path)
+        save({ solution_images: next })
+        return next
+      })
+    }
     try {
-      const path = new URL(url).pathname.split('/object/public/task-images/')[1]
-      if (path) await supabase.storage.from('task-images').remove([path])
+      await supabase.storage.from('task-images').remove([path])
     } catch {}
-  }
-
-  async function handleSave() {
-    if (!task || !name.trim()) return
-    setSaving(true)
-    await onSave(task.id, {
-      name: name.trim(),
-      description: description.trim() || null,
-      solution: solution.trim() || null,
-      description_images: descImages,
-      solution_images: solImages,
-      priority,
-      category,
-      status,
-      due_date: dueDate || null,
-    })
-    setSaving(false)
-    setDirty(false)
   }
 
   const priorityColors = PRIORITY_COLORS[priority]
@@ -300,23 +365,28 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
                   <textarea
                     ref={titleRef}
                     value={name}
-                    onChange={(e) => { setName(e.target.value); setDirty(true); resizeTitle() }}
+                    onChange={(e) => { setName(e.target.value); resizeTitle() }}
+                    onBlur={handleNameBlur}
                     rows={1}
                     className="w-full text-lg font-semibold bg-transparent border-none outline-none text-foreground placeholder:text-muted/50 resize-none leading-snug overflow-hidden"
                     placeholder={t('addTaskPlaceholder')}
                   />
                 </Dialog.Title>
               </div>
-              <Dialog.Close asChild>
-                <Button variant="ghost" size="icon-sm" className="-mt-0.5 flex-shrink-0">
-                  <X className="h-4 w-4" />
-                </Button>
-              </Dialog.Close>
+
+              <div className="flex items-center gap-1.5 flex-shrink-0 -mt-0.5">
+                {autoSaving === 'saving' && <Loader2 className="h-3.5 w-3.5 text-muted animate-spin" />}
+                {autoSaving === 'saved' && <Check className="h-3.5 w-3.5 text-low" />}
+                <Dialog.Close asChild>
+                  <Button variant="ghost" size="icon-sm">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </Dialog.Close>
+              </div>
             </div>
 
-            {/* ── Notion-style metadata — 2 × 2 grid ── */}
+            {/* ── Metadata grid ── */}
             <div className="mt-3 border-t border-border pt-3 grid grid-cols-2 gap-x-4 gap-y-1">
-              {/* Row 1: Priority | Category */}
               <MetaRow label={t('priorityLabel')}>
                 <MetaDropdown
                   trigger={
@@ -327,7 +397,7 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
                   }
                 >
                   {PRIORITIES.map((p) => (
-                    <MetaOption key={p} active={priority === p} onClick={() => { setPriority(p); setDirty(true) }}>
+                    <MetaOption key={p} active={priority === p} onClick={() => handlePriority(p)}>
                       <span className={cn('w-2 h-2 rounded-full flex-shrink-0', PRIORITY_COLORS[p].dot)} />
                       {t(p)}
                     </MetaOption>
@@ -347,7 +417,7 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
                   {CATEGORIES.map((c) => {
                     const Icon = CATEGORY_ICON_MAP[c]
                     return (
-                      <MetaOption key={c} active={category === c} onClick={() => { setCategory(c); setDirty(true) }}>
+                      <MetaOption key={c} active={category === c} onClick={() => handleCategory(c)}>
                         <Icon className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
                         {t(c)}
                       </MetaOption>
@@ -356,11 +426,10 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
                 </MetaDropdown>
               </MetaRow>
 
-              {/* Row 2: Status | Due date */}
               <MetaRow label={t('statusLabel')}>
                 <MetaDropdown trigger={<span className="text-sm">{t(status)}</span>}>
                   {STATUSES.map((s) => (
-                    <MetaOption key={s} active={status === s} onClick={() => { setStatus(s); setDirty(true) }}>
+                    <MetaOption key={s} active={status === s} onClick={() => handleStatus(s)}>
                       {t(s)}
                     </MetaOption>
                   ))}
@@ -369,7 +438,7 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
 
               <MetaRow label={t('dueDate')}>
                 <div className="-ml-2">
-                  <DatePicker value={dueDate} onChange={(v) => { setDueDate(v); setDirty(true) }} />
+                  <DatePicker value={dueDate} onChange={handleDueDate} />
                 </div>
               </MetaRow>
             </div>
@@ -377,14 +446,14 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
 
           {/* ── Body ── */}
           <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4 border-t border-border pt-4">
-            {/* Description */}
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-muted/70 block mb-1.5">
                 {t('taskDescription')}
               </label>
               <textarea
                 value={description}
-                onChange={(e) => { setDescription(e.target.value); setDirty(true) }}
+                onChange={(e) => setDescription(e.target.value)}
+                onBlur={handleDescriptionBlur}
                 placeholder={t('descriptionPlaceholder')}
                 rows={4}
                 className={cn(
@@ -394,22 +463,22 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
                 )}
               />
               <ImageSection
-                images={descImages}
+                paths={descPaths}
                 onAdd={(f) => uploadImage('desc', f)}
-                onRemove={(url) => removeImage('desc', url)}
+                onRemove={(p) => removeImage('desc', p)}
                 uploading={uploadingDesc}
                 label={t('attachImage')}
               />
             </div>
 
-            {/* Solution */}
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-muted/70 block mb-1.5">
                 {t('solution')}
               </label>
               <textarea
                 value={solution}
-                onChange={(e) => { setSolution(e.target.value); setDirty(true) }}
+                onChange={(e) => setSolution(e.target.value)}
+                onBlur={handleSolutionBlur}
                 placeholder={t('solutionPlaceholder')}
                 rows={4}
                 className={cn(
@@ -419,9 +488,9 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
                 )}
               />
               <ImageSection
-                images={solImages}
+                paths={solPaths}
                 onAdd={(f) => uploadImage('sol', f)}
-                onRemove={(url) => removeImage('sol', url)}
+                onRemove={(p) => removeImage('sol', p)}
                 uploading={uploadingSol}
                 label={t('attachImage')}
               />
@@ -429,7 +498,7 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
           </div>
 
           {/* ── Footer ── */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+          <div className="flex items-center px-6 py-4 border-t border-border">
             <ConfirmDialog
               trigger={
                 <Button variant="destructive" size="sm" className="gap-1.5">
@@ -441,14 +510,6 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
               description={`"${task?.name ?? ''}" ${t('permanentlyRemoved')}`}
               onConfirm={() => { if (task) { onDelete(task.id); onClose() } }}
             />
-            <div className="flex items-center gap-2">
-              <Dialog.Close asChild>
-                <Button variant="outline" size="sm">{t('cancel')}</Button>
-              </Dialog.Close>
-              <Button size="sm" onClick={handleSave} disabled={saving || !dirty || !name.trim()}>
-                {saving ? t('saving') : t('save')}
-              </Button>
-            </div>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
