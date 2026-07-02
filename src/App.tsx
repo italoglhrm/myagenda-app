@@ -33,6 +33,7 @@ function AppInner() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [archivedMode, setArchivedMode] = useState<'off' | 'only' | 'all'>('off')
+  const [archivedPopoverOpen, setArchivedPopoverOpen] = useState(false)
   const [subprojectFilter, setSubprojectFilter] = useState<string | null>(null)
   const [openTask, setOpenTask] = useState<Task | null>(null)
 
@@ -257,7 +258,7 @@ function AppInner() {
                     <Layers className="h-3 w-3" />
                     {t('allProjects')}
                   </button>
-                  <Popover.Root>
+                  <Popover.Root open={archivedPopoverOpen} onOpenChange={setArchivedPopoverOpen}>
                     <Popover.Trigger asChild>
                       <button
                         className={cn(
@@ -279,7 +280,7 @@ function AppInner() {
                         {(['only', 'all', 'off'] as const).map((mode) => (
                           <button
                             key={mode}
-                            onClick={() => setArchivedMode(mode)}
+                            onClick={() => { setArchivedMode(mode); setArchivedPopoverOpen(false) }}
                             className={cn(
                               'w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-left',
                               archivedMode === mode ? 'bg-accent-light text-accent' : 'text-foreground hover:bg-border/50'
