@@ -83,6 +83,19 @@ export function useTasks(projectId: string | string[] | null | 'all') {
   }
 
   async function deleteTask(id: string) {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    // Best-effort: remove all images stored under this task before deleting the row
+    if (user) {
+      const { data: files } = await supabase.storage
+        .from('task-images')
+        .list(`${user.id}/${id}`)
+      if (files && files.length > 0) {
+        const paths = files.map((f) => `${user.id}/${id}/${f.name}`)
+        await supabase.storage.from('task-images').remove(paths)
+      }
+    }
+
     const { error } = await supabase.from('tasks').delete().eq('id', id)
     if (!error) setTasks((prev) => prev.filter((t) => t.id !== id))
   }

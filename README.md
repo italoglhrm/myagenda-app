@@ -52,24 +52,39 @@ cd myagenda-app
 This creates the `tasks` and `projects` tables with Row Level Security enabled.
 
 #### 2.3 Create the storage bucket for task images
-1. In the Supabase dashboard, go to **Storage → New bucket**
-2. Name it `task-images` and enable **Public**
-3. Go to **Storage → task-images → Policies** and add three policies:
+1. Go to **Storage → New bucket**
+2. Name it `task-images` and enable **Public bucket**
+3. Click **Save**
 
-| Operation | Policy |
-|-----------|--------|
-| INSERT | `auth.role() = 'authenticated'` |
-| SELECT | *(no restriction — public)* |
-| DELETE | `auth.uid()::text = (storage.foldername(name))[1]` |
+#### 2.4 Add storage policies
+Go to **Storage → Policies → New policy** and add the following two policies on the `task-images` bucket. For each one, click **"For full customization"**.
 
-#### 2.4 Enable Magic Link auth
+**Policy 1 — allow authenticated users to upload:**
+- Policy name: `authenticated users can upload`
+- Allowed operation: `INSERT`
+- USING / WITH CHECK expression:
+  ```sql
+  auth.role() = 'authenticated'
+  ```
+
+**Policy 2 — allow users to delete their own images:**
+- Policy name: `users can delete own task images`
+- Allowed operation: `DELETE`
+- USING expression:
+  ```sql
+  auth.uid()::text = (storage.foldername(name))[1]
+  ```
+
+> SELECT is already covered by the public bucket setting — no policy needed.
+
+#### 2.5 Enable Magic Link auth
 1. Go to **Authentication → Providers**
 2. Make sure **Email** is enabled
 3. Go to **Authentication → URL Configuration**
 4. Add your local URL to **Redirect URLs**: `http://localhost:5173`
    - For production, also add your Vercel URL: `https://your-app.vercel.app`
 
-#### 2.5 Get your API keys
+#### 2.6 Get your API keys
 1. Go to **Project Settings → API**
 2. Copy the **Project URL** and the **anon / public** key
 
@@ -112,7 +127,6 @@ The app will be available at `http://localhost:5173`.
 After deploying, go back to Supabase → **Authentication → URL Configuration** and add your Vercel URL to **Redirect URLs**.
 
 Every `git push` to `main` will trigger an automatic redeploy.
-
 
 ---
 
@@ -164,24 +178,39 @@ cd myagenda-app
 Isso cria as tabelas `tasks` e `projects` com Row Level Security ativado.
 
 #### 2.3 Crie o bucket de armazenamento para imagens
-1. No painel do Supabase, vá em **Storage → New bucket**
-2. Nomeie como `task-images` e ative a opção **Public**
-3. Vá em **Storage → task-images → Policies** e adicione três políticas:
+1. Vá em **Storage → New bucket**
+2. Nomeie como `task-images` e ative a opção **Public bucket**
+3. Clique em **Save**
 
-| Operação | Política |
-|----------|----------|
-| INSERT | `auth.role() = 'authenticated'` |
-| SELECT | *(sem restrição — público)* |
-| DELETE | `auth.uid()::text = (storage.foldername(name))[1]` |
+#### 2.4 Adicione as políticas de armazenamento
+Vá em **Storage → Policies → New policy** e adicione as duas políticas abaixo no bucket `task-images`. Em cada uma, clique em **"For full customization"**.
 
-#### 2.4 Ative o login por Magic Link
+**Política 1 — permitir upload para usuários autenticados:**
+- Policy name: `authenticated users can upload`
+- Allowed operation: `INSERT`
+- USING / WITH CHECK expression:
+  ```sql
+  auth.role() = 'authenticated'
+  ```
+
+**Política 2 — permitir que usuários deletem suas próprias imagens:**
+- Policy name: `users can delete own task images`
+- Allowed operation: `DELETE`
+- USING expression:
+  ```sql
+  auth.uid()::text = (storage.foldername(name))[1]
+  ```
+
+> SELECT já está coberto pelo bucket público — nenhuma política adicional é necessária.
+
+#### 2.5 Ative o login por Magic Link
 1. Vá em **Authentication → Providers**
 2. Certifique-se de que **Email** está habilitado
 3. Vá em **Authentication → URL Configuration**
 4. Adicione sua URL local em **Redirect URLs**: `http://localhost:5173`
    - Em produção, adicione também a URL do Vercel: `https://seu-app.vercel.app`
 
-#### 2.5 Obtenha as chaves de API
+#### 2.6 Obtenha as chaves de API
 1. Vá em **Project Settings → API**
 2. Copie a **Project URL** e a chave **anon / public**
 
@@ -224,4 +253,3 @@ O app estará disponível em `http://localhost:5173`.
 Após o deploy, volte ao Supabase → **Authentication → URL Configuration** e adicione a URL do Vercel em **Redirect URLs**.
 
 A cada `git push` para a branch `main`, o Vercel fará o redeploy automaticamente.
-

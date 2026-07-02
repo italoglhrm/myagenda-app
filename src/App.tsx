@@ -6,6 +6,7 @@ import { useTasks } from './hooks/useTasks'
 import { useProjects } from './hooks/useProjects'
 import { useTheme } from './hooks/useTheme'
 import { useLanguage, LanguageProvider } from './contexts/LanguageContext'
+import { ToastProvider } from './contexts/ToastContext'
 import type { TranslationKey } from './lib/i18n'
 import { LoginScreen } from './components/LoginScreen'
 import { AddTaskBar } from './components/AddTaskBar'
@@ -308,9 +309,11 @@ function AppInner() {
 export default function App() {
   return (
     <LanguageProvider>
-      <TooltipProvider>
-        <AppInner />
-      </TooltipProvider>
+      <ToastProvider>
+        <TooltipProvider>
+          <AppInner />
+        </TooltipProvider>
+      </ToastProvider>
     </LanguageProvider>
   )
 }

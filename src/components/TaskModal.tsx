@@ -6,6 +6,7 @@ import type { Task, Priority, Category, Status, Project } from '../types'
 import { PRIORITY_COLORS } from '../types'
 import { CATEGORY_ICON_MAP } from '../lib/icons'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { Button } from './ui/button'
 import { DatePicker } from './ui/date-picker'
@@ -130,6 +131,7 @@ function ImageSection({
 // ── Main modal ────────────────────────────────────────────────────────────────
 export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
   const { t } = useLanguage()
+  const { toast } = useToast()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -183,10 +185,14 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
     const path = `${user.id}/${task.id}/${Date.now()}.${ext}`
     const { error } = await supabase.storage.from('task-images').upload(path, file)
     setter(false)
-    if (error) return
+    if (error) {
+      console.error('Upload error:', error)
+      toast('error', error.message)
+      return
+    }
     const { data: { publicUrl } } = supabase.storage.from('task-images').getPublicUrl(path)
-    if (field === 'desc') setDescImages((prev) => { const n = [...prev, publicUrl]; return n })
-    else setSolImages((prev) => { const n = [...prev, publicUrl]; return n })
+    if (field === 'desc') setDescImages((prev) => [...prev, publicUrl])
+    else setSolImages((prev) => [...prev, publicUrl])
     setDirty(true)
   }
 
