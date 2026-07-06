@@ -87,6 +87,9 @@ export function useTasks(projectId: string | string[] | null | 'all', archived: 
   }
 
   async function deleteTask(id: string) {
+    // Optimistic update — remove immediately so the UI doesn't wait for the network
+    setTasks((prev) => prev.filter((t) => t.id !== id))
+
     const { data: { user } } = await supabase.auth.getUser()
 
     // Best-effort: remove all images stored under this task before deleting the row
@@ -100,8 +103,7 @@ export function useTasks(projectId: string | string[] | null | 'all', archived: 
       }
     }
 
-    const { error } = await supabase.from('tasks').delete().eq('id', id)
-    if (!error) setTasks((prev) => prev.filter((t) => t.id !== id))
+    await supabase.from('tasks').delete().eq('id', id)
   }
 
   async function archiveTask(id: string) {
