@@ -54,6 +54,13 @@ function AppInner() {
     return selectedProjectId
   }, [showAll, selectedIsParent, selectedProjectId, childrenOfSelected])
 
+  // Default destination for new tasks — null when context is ambiguous (all/inbox)
+  const defaultDestinationId = useMemo<string | null>(() => {
+    if (showAll || !selectedProjectId) return null
+    if (subprojectFilter) return subprojectFilter
+    return selectedProjectId
+  }, [showAll, selectedProjectId, subprojectFilter])
+
   const archivedParam = archivedMode === 'only' ? true : archivedMode === 'all' ? 'all' : false
 
   const { tasks: allTasks, loading, addTask, updateTask, deleteTask, archiveTask, unarchiveTask, cycleStatus } = useTasks(
@@ -216,7 +223,13 @@ function AppInner() {
 
         {/* Main column */}
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
-          <AddTaskBar onAdd={addTask} />
+          <AddTaskBar
+            projects={projects}
+            defaultProjectId={defaultDestinationId}
+            onAdd={(name, priority, category, due_date, project_id) =>
+              addTask(name, priority, category, due_date, project_id)
+            }
+          />
 
           <main className="flex-1 overflow-y-auto px-6 py-4">
             {/* Top bar: subproject filter chips OR all-projects toggle */}

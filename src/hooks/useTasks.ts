@@ -41,11 +41,13 @@ export function useTasks(projectId: string | string[] | null | 'all', archived: 
     fetchTasks()
   }, [fetchTasks])
 
-  async function addTask(name: string, priority: Priority, category: Category, due_date?: string | null) {
+  async function addTask(name: string, priority: Priority, category: Category, due_date?: string | null, explicitProjectId?: string | null) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const insertProjectId = projectId === 'all' ? null : Array.isArray(projectId) ? projectId[0] : projectId
+    const insertProjectId = explicitProjectId !== undefined
+      ? explicitProjectId
+      : projectId === 'all' ? null : Array.isArray(projectId) ? projectId[0] : projectId
 
     const { data, error } = await supabase
       .from('tasks')
