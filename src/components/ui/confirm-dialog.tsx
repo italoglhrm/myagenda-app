@@ -32,9 +32,13 @@ export function ConfirmDialog({
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+    <>
+      {/* Wrapper captures clicks from any trigger, including ones wrapped in Tooltip */}
+      <span style={{ display: 'contents' }} onClick={(e) => { e.stopPropagation(); setOpen(true) }}>
+        {trigger}
+      </span>
 
+      <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay
           className={cn(
@@ -78,5 +82,6 @@ export function ConfirmDialog({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+    </>
   )
 }
