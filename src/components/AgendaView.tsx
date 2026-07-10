@@ -151,6 +151,7 @@ export function AgendaView({ tasks, onMarkDone, onDelete, onArchive, onUnarchive
                 const colors = PRIORITY_COLORS[task.priority]
                 const CategoryIcon = CATEGORY_ICON_MAP[task.category]
                 const overdue = group.variant === 'overdue'
+                const isDone = task.status === 'done'
 
                 return (
                   <div
@@ -158,7 +159,9 @@ export function AgendaView({ tasks, onMarkDone, onDelete, onArchive, onUnarchive
                     className={cn(
                       'group flex items-center gap-3 rounded-xl border bg-card px-4 py-3',
                       'transition-all duration-150 hover:shadow-card',
-                      overdue
+                      isDone
+                        ? 'opacity-50 border-border'
+                        : overdue
                         ? 'border-urgent-border bg-urgent-light/20'
                         : 'border-border hover:border-accent/25'
                     )}
@@ -166,7 +169,10 @@ export function AgendaView({ tasks, onMarkDone, onDelete, onArchive, onUnarchive
                     <span className={cn('w-2 h-2 rounded-full flex-shrink-0', colors.dot)} />
 
                     <p
-                      className="flex-1 min-w-0 text-sm font-medium truncate cursor-pointer hover:text-accent transition-colors"
+                      className={cn(
+                        'flex-1 min-w-0 text-sm font-medium truncate cursor-pointer hover:text-accent transition-colors',
+                        isDone && 'line-through text-muted'
+                      )}
                       onClick={() => onOpenTask(task)}
                     >{task.name}</p>
 
@@ -193,15 +199,17 @@ export function AgendaView({ tasks, onMarkDone, onDelete, onArchive, onUnarchive
                     </div>
 
                     <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onMarkDone(task)}
-                        className="h-7 gap-1.5 hover:text-low hover:border-low-border hover:bg-low-light"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">{t('done')}</span>
-                      </Button>
+                      {!isDone && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onMarkDone(task)}
+                          className="h-7 gap-1.5 hover:text-low hover:border-low-border hover:bg-low-light"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline text-xs">{t('done')}</span>
+                        </Button>
+                      )}
                       {task.archived && onUnarchive ? (
                         <Tooltip label={t('unarchive')}>
                           <Button variant="outline" size="icon-sm" onClick={() => onUnarchive(task.id)}>
