@@ -43,7 +43,7 @@ function buildGroups(
   const undated: Task[] = []
 
   for (const t of tasks) {
-    if (t.status === 'done') continue
+    if (t.status === 'done' && !t.archived) continue
     if (!t.due_date) { undated.push(t); continue }
 
     const d = parseDateLocal(t.due_date)
