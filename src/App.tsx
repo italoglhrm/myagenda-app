@@ -16,7 +16,7 @@ import { KanbanView } from './components/KanbanView'
 import { AgendaView } from './components/AgendaView'
 import { Sidebar } from './components/Sidebar'
 import { ThemeToggle } from './components/ThemeToggle'
-import { LogoIcon } from './components/LogoIcon'
+import { LogoIcon } from './assets/LogoIcon'
 import { Button } from './components/ui/button'
 import { Tooltip, TooltipProvider } from './components/ui/tooltip'
 import { TaskModal } from './components/TaskModal'
@@ -224,7 +224,6 @@ function AppInner() {
         {/* Main column */}
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
           <AddTaskBar
-            projects={projects}
             defaultProjectId={defaultDestinationId}
             onAdd={(name, priority, category, due_date, project_id) =>
               addTask(name, priority, category, due_date, project_id)
@@ -327,6 +326,8 @@ function AppInner() {
                     onUnarchive={archivedMode !== 'off' ? unarchiveTask : undefined}
                     onOpenTask={setOpenTask}
                     projectMap={showProjectTag ? projectMap : undefined}
+                    projects={projects}
+                    onMove={(id, projectId) => updateTask(id, { project_id: projectId })}
                   />
                 )}
                 {view === 'kanban' && (
@@ -361,6 +362,7 @@ function AppInner() {
       <TaskModal
         task={openTask}
         project={openTask?.project_id ? projectMap[openTask.project_id] : undefined}
+        projects={projects}
         onClose={() => setOpenTask(null)}
         onSave={async (id, changes) => {
           await updateTask(id, changes)

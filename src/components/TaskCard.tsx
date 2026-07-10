@@ -9,6 +9,7 @@ import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { ConfirmDialog } from './ui/confirm-dialog'
+import { ProjectPicker } from './ProjectPicker'
 import { cn } from '../lib/utils'
 
 interface Props {
@@ -19,10 +20,12 @@ interface Props {
   onUnarchive?: (id: string) => void
   onOpen?: () => void
   project?: Project
+  projects?: Project[]
+  onMove?: (id: string, projectId: string | null) => void
   className?: string
 }
 
-export function TaskCard({ task, onToggleDone, onDelete, onArchive, onUnarchive, onOpen, project, className }: Props) {
+export function TaskCard({ task, onToggleDone, onDelete, onArchive, onUnarchive, onOpen, project, projects, onMove, className }: Props) {
   const { lang, t } = useLanguage()
   const isDone = task.status === 'done'
   const colors = PRIORITY_COLORS[task.priority]
@@ -49,7 +52,14 @@ export function TaskCard({ task, onToggleDone, onDelete, onArchive, onUnarchive,
       </span>
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {project && (
+        {projects && onMove ? (
+          <ProjectPicker
+            projects={projects}
+            value={task.project_id}
+            onChange={(projectId) => onMove(task.id, projectId)}
+            className="hidden sm:flex max-w-[110px]"
+          />
+        ) : project && (
           <Badge variant="muted" className="hidden sm:flex items-center gap-1 max-w-[96px]">
             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />
             <span className="truncate">{project.name}</span>

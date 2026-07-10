@@ -13,11 +13,13 @@ interface Props {
   onUnarchive?: (id: string) => void
   onOpenTask: (task: Task) => void
   projectMap?: Record<string, Project>
+  projects?: Project[]
+  onMove?: (id: string, projectId: string | null) => void
 }
 
 const PRIORITY_ORDER: Priority[] = ['urgent', 'high', 'normal', 'low']
 
-export function ListView({ tasks, onToggleDone, onDelete, onArchive, onUnarchive, onOpenTask, projectMap }: Props) {
+export function ListView({ tasks, onToggleDone, onDelete, onArchive, onUnarchive, onOpenTask, projectMap, projects, onMove }: Props) {
   const { t } = useLanguage()
 
   const PRIORITY_EMPTY: Record<Priority, string> = {
@@ -84,6 +86,8 @@ export function ListView({ tasks, onToggleDone, onDelete, onArchive, onUnarchive
                     onUnarchive={onUnarchive}
                     onOpen={() => onOpenTask(task)}
                     project={task.project_id && projectMap ? projectMap[task.project_id] : undefined}
+                    projects={projects}
+                    onMove={onMove}
                   />
                 ))}
               </div>

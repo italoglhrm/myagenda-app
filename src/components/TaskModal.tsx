@@ -10,13 +10,15 @@ import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { Button } from './ui/button'
 import { DatePicker } from './ui/date-picker'
+import { ProjectPicker } from './ProjectPicker'
 import { cn } from '../lib/utils'
 
 interface Props {
   task: Task | null
   project?: Project
+  projects?: Project[]
   onClose: () => void
-  onSave: (id: string, changes: Partial<Pick<Task, 'name' | 'description' | 'solution' | 'description_images' | 'solution_images' | 'priority' | 'category' | 'status' | 'due_date'>>) => Promise<void>
+  onSave: (id: string, changes: Partial<Pick<Task, 'name' | 'description' | 'solution' | 'description_images' | 'solution_images' | 'priority' | 'category' | 'status' | 'due_date' | 'project_id'>>) => Promise<void>
   onDelete: (id: string) => void
 }
 
@@ -204,7 +206,7 @@ function ImageSection({
 }
 
 // ── Main modal ────────────────────────────────────────────────────────────────
-export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
+export function TaskModal({ task, project, projects, onClose, onSave, onDelete }: Props) {
   const { t } = useLanguage()
   const { toast } = useToast()
 
@@ -250,7 +252,7 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
     }
   }, [task?.id, resizeTitle])
 
-  async function save(changes: Partial<Pick<Task, 'name' | 'description' | 'solution' | 'description_images' | 'solution_images' | 'priority' | 'category' | 'status' | 'due_date'>>) {
+  async function save(changes: Partial<Pick<Task, 'name' | 'description' | 'solution' | 'description_images' | 'solution_images' | 'priority' | 'category' | 'status' | 'due_date' | 'project_id'>>) {
     if (!task) return
     setAutoSaving('saving')
     await onSave(task.id, changes)
@@ -283,6 +285,7 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
   function handleCategory(c: Category) { setCategory(c); save({ category: c }) }
   function handleStatus(s: Status) { setStatus(s); save({ status: s }) }
   function handleDueDate(v: string) { setDueDate(v); save({ due_date: v || null }) }
+  function handleProject(projectId: string | null) { save({ project_id: projectId }) }
 
   async function uploadImage(field: 'desc' | 'sol', file: File) {
     const { data: { user } } = await supabase.auth.getUser()
@@ -354,7 +357,11 @@ export function TaskModal({ task, project, onClose, onSave, onDelete }: Props) {
           <div className="px-6 pt-5 pb-3">
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
-                {project && (
+                {projects && task ? (
+                  <div className="mb-2">
+                    <ProjectPicker projects={projects} value={task.project_id} onChange={handleProject} />
+                  </div>
+                ) : project && (
                   <div className="flex items-center gap-1.5 mb-2">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color }} />
                     <span className="text-xs text-muted">{project.name}</span>
