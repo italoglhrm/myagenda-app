@@ -47,8 +47,10 @@ function buildGroups(
     if (!t.due_date) { undated.push(t); continue }
 
     const d = parseDateLocal(t.due_date)
-    if (d < today) { overdue.push(t); continue }
-    if (d.getTime() === today.getTime()) { todayTasks.push(t); continue }
+    if (t.status !== 'done') {
+      if (d < today) { overdue.push(t); continue }
+      if (d.getTime() === today.getTime()) { todayTasks.push(t); continue }
+    }
 
     const key = t.due_date
     if (!byDate[key]) byDate[key] = []
