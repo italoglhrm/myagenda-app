@@ -45,8 +45,6 @@ It started as a portfolio project meant to show a complete slice of full-stack w
   </tr>
 </table>
 
-> Drop your own screenshots into `docs/screenshots/` using the file names above and they'll render here automatically.
-
 ### Features
 
 - **Magic link auth**, passwordless sign-in via email
@@ -68,7 +66,6 @@ It started as a portfolio project meant to show a complete slice of full-stack w
 | Drag-and-drop | `@dnd-kit` |
 | Backend | Supabase (Postgres, Auth, Storage) |
 | Deployment | Vercel |
-| E2E testing | Playwright |
 
 ### Engineering highlights
 
@@ -234,8 +231,6 @@ Começou como projeto de portfólio, pensado para demonstrar uma fatia completa 
   </tr>
 </table>
 
-> Coloque suas próprias capturas de tela em `docs/screenshots/` usando os nomes de arquivo acima para que apareçam aqui automaticamente.
-
 ### Funcionalidades
 
 - **Login por Magic Link**, autenticação sem senha via e-mail
@@ -257,7 +252,6 @@ Começou como projeto de portfólio, pensado para demonstrar uma fatia completa 
 | Drag-and-drop | `@dnd-kit` |
 | Backend | Supabase (Postgres, Auth, Storage) |
 | Deploy | Vercel |
-| Testes E2E | Playwright |
 
 ### Destaques de engenharia
 

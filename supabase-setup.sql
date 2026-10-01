@@ -49,22 +49,24 @@ CREATE POLICY "users_manage_own_projects"
 -- ── Storage: task images ──────────────────────────────────────────────────────
 -- In Supabase Dashboard → Storage → New bucket:
 --   Name: task-images
---   Public: true
+--   Public: false (images are private — only the authenticated owner can access them)
 --
--- Then add this RLS policy in Storage → task-images → Policies:
+-- Then add these RLS policies in Storage → task-images → Policies. Each one
+-- scopes access to the first path segment (user_id/task_id/file.jpg), so a
+-- user can only reach their own files. See README.md for the full walkthrough.
 
 -- INSERT (upload):
--- CREATE POLICY "auth users can upload task images"
+-- CREATE POLICY "owner can upload"
 --   ON storage.objects FOR INSERT
---   WITH CHECK (bucket_id = 'task-images' AND auth.role() = 'authenticated');
+--   WITH CHECK (bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]);
 
 -- SELECT (view):
--- CREATE POLICY "public can view task images"
+-- CREATE POLICY "owner can view"
 --   ON storage.objects FOR SELECT
---   USING (bucket_id = 'task-images');
+--   USING (bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]);
 
 -- DELETE:
--- CREATE POLICY "users can delete own task images"
+-- CREATE POLICY "owner can delete"
 --   ON storage.objects FOR DELETE
 --   USING (bucket_id = 'task-images' AND auth.uid()::text = (storage.foldername(name))[1]);
 
