@@ -218,16 +218,16 @@ Começou como projeto de portfólio, pensado para demonstrar uma fatia completa 
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/list-view.png" width="420" alt="Visualização em lista" /><br /><sub>Visualização em lista, agrupada por prioridade</sub></td>
-    <td align="center"><img src="docs/screenshots/kanban-view.png" width="420" alt="Quadro Kanban" /><br /><sub>Visualização em quadro, Kanban com arrastar e soltar</sub></td>
+    <td align="center"><img src="docs/screenshots/pt/list-view.png" width="420" alt="Visualização em lista" /><br /><sub>Visualização em lista, agrupada por prioridade</sub></td>
+    <td align="center"><img src="docs/screenshots/pt/kanban-view.png" width="420" alt="Quadro Kanban" /><br /><sub>Visualização em quadro, Kanban com arrastar e soltar</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/agenda-view.png" width="420" alt="Visualização em agenda" /><br /><sub>Visualização em agenda, agrupada por prazo</sub></td>
-    <td align="center"><img src="docs/screenshots/task-modal.png" width="420" alt="Modal de detalhes da tarefa" /><br /><sub>Detalhes da tarefa, salvamento automático, notas e imagens</sub></td>
+    <td align="center"><img src="docs/screenshots/pt/agenda-view.png" width="420" alt="Visualização em agenda" /><br /><sub>Visualização em agenda, agrupada por prazo</sub></td>
+    <td align="center"><img src="docs/screenshots/pt/task-modal.png" width="420" alt="Modal de detalhes da tarefa" /><br /><sub>Detalhes da tarefa, salvamento automático, notas e imagens</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/login.png" width="420" alt="Tela de login" /><br /><sub>Login por magic link</sub></td>
-    <td align="center"><img src="docs/screenshots/light-mode.png" width="420" alt="Tema claro" /><br /><sub>Tema claro (o escuro é o padrão acima)</sub></td>
+    <td align="center"><img src="docs/screenshots/pt/login.png" width="420" alt="Tela de login" /><br /><sub>Login por magic link</sub></td>
+    <td align="center"><img src="docs/screenshots/pt/light-mode.png" width="420" alt="Tema claro" /><br /><sub>Tema claro (o escuro é o padrão acima)</sub></td>
   </tr>
 </table>
 
