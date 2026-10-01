@@ -392,6 +392,12 @@ Após o deploy, volte ao Supabase → **Authentication → URL Configuration** e
 
 ---
 
+## License
+
+MIT, see [LICENSE](LICENSE).
+
+---
+
 <div align="center">
 
 Built by [@italoglhrm](https://github.com/italoglhrm)
