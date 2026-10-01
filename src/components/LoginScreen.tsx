@@ -80,14 +80,14 @@ export function LoginScreen({ onSendMagicLink, theme, onToggleTheme }: Props) {
                 onClick={() => { setSent(false); setEmail('') }}
                 className="mt-4 text-xs text-accent hover:underline"
               >
-                Use a different email
+                {t('useDifferentEmail')}
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted uppercase tracking-wider">
-                  Email
+                  {t('emailLabel')}
                 </label>
                 <Input
                   type="email"
@@ -121,7 +121,7 @@ export function LoginScreen({ onSendMagicLink, theme, onToggleTheme }: Props) {
         </div>
 
         <p className="text-center text-xs text-muted/60 mt-4">
-          Private personal tool, no password required
+          {t('privateToolNote')}
         </p>
       </div>
     </div>

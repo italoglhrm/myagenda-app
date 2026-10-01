@@ -69,12 +69,15 @@ export const translations = {
     // login
     loginTitle: 'Welcome to MyAgenda',
     loginSubtitle: 'Enter your email to receive a magic link, no password needed.',
+    emailLabel: 'Email',
     emailPlaceholder: 'your@email.com',
     sendMagicLink: 'Send magic link',
     sending: 'Sending…',
     checkEmail: 'Check your email',
     magicLinkSentTo: "We've sent a login link to",
     clickLinkToSignIn: 'Click the link in the email to sign in.',
+    useDifferentEmail: 'Use a different email',
+    privateToolNote: 'Private personal tool, no password required',
     // task modal
     taskDescription: 'Description',
     descriptionPlaceholder: 'Add a description…',
@@ -177,12 +180,15 @@ export const translations = {
     // login
     loginTitle: 'Bem-vindo ao MyAgenda',
     loginSubtitle: 'Digite seu e-mail para receber um link mágico, sem senha.',
+    emailLabel: 'E-mail',
     emailPlaceholder: 'seu@email.com',
     sendMagicLink: 'Enviar link mágico',
     sending: 'Enviando…',
     checkEmail: 'Verifique seu e-mail',
     magicLinkSentTo: 'Enviamos um link de acesso para',
     clickLinkToSignIn: 'Clique no link do e-mail para entrar.',
+    useDifferentEmail: 'Usar outro e-mail',
+    privateToolNote: 'Ferramenta pessoal privada, sem necessidade de senha',
     // task modal
     taskDescription: 'Descrição',
     descriptionPlaceholder: 'Adicionar uma descrição…',
